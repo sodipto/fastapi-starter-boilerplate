@@ -1,3 +1,4 @@
+from app.core.container import Container
 from fastapi import FastAPI
 
 from app.api.v1.routes import routers as v1_routers
@@ -7,5 +8,6 @@ app = FastAPI(
     docs_url="/swagger",
     redoc_url="/redoc",
 )
+app.container = Container()
 
 app.include_router(v1_routers, prefix="/api/v1")

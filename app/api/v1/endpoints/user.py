@@ -14,7 +14,7 @@ router = APIRouter(
 
 @router.get("/me", summary="Get current user", response_model=dict)
 def get_me():
-    return {"username": "sodipto", "email": "johndoe@example.com"}
+    return {"username": "sodipto", "email": "sodipto.saha@asthait.com"}
 
 
 @router.get("/{user_id}", summary="Get user by ID", response_model=dict)

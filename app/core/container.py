@@ -1,8 +1,7 @@
-from app.services import*
-from app.repositories import*
+from app.services import UserService
+from app.repositories import UserRepository
 
 from dependency_injector import containers, providers
-
 
 
 class Container(containers.DeclarativeContainer):

@@ -5,15 +5,37 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: FastAPI",
+            "name": "FastAPI: Development",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
-            "args": [
-                "app.main:app",
-                "--reload"
-            ],
-            "jinja": true
+            "args": ["app.main:app", "--reload"],
+            "jinja": true,
+            "env": {
+                "ENV": "development"
+            }
+        },
+        {
+            "name": "FastAPI: Staging",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": ["app.main:app", "--reload"],
+            "jinja": true,
+            "env": {
+                "ENV": "staging"
+            }
+        },
+        {
+            "name": "FastAPI: Production",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": ["app.main:app", "--reload"],
+            "jinja": true,
+            "env": {
+                "ENV": "production"
+            }
         }
     ]
 }

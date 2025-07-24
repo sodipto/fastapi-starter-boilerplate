@@ -6,7 +6,7 @@ class UserRepository:
     _users_db = {
         "test@example.com": {
             "email": "test@example.com",
-            "hashed_password": "$2b$12$LQP.ZG5eX0HLi3TJ4o5VX.7yGHIKPwNq8zUHJyZYHzHONZCmDyXqq",  # password: testpassword
+            "hashed_password": "$2b$12$wUDYNFpkySt5phBQmlTQ1OrpNn76S6/CnXoZ6Q3Blil3WL6ZEXsju",  # 123456: testpassword
             "id": 1
         }
     }

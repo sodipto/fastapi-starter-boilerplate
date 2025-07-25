@@ -17,6 +17,11 @@ def custom_openapi(app):
             "description": "Input your Bearer token to access all endpoints"
         }
     }
-    openapi_schema["security"] = [{"Bearer": []}]
+    
+    # Apply to all routes globally (optional)
+    for path in openapi_schema["paths"].values():
+        for method in path.values():
+            method["security"] = [{"Bearer": []}]
+            
     app.openapi_schema = openapi_schema
     return app.openapi_schema

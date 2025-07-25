@@ -4,10 +4,10 @@ from typing import Optional, Dict
 class UserRepository:
     # Simulated database
     _users_db = {
-        "test@example.com": {
-            "email": "test@example.com",
+        "sa@admin.com": {
+            "email": "sa@admin.com",
             "hashed_password": "$2b$12$wUDYNFpkySt5phBQmlTQ1OrpNn76S6/CnXoZ6Q3Blil3WL6ZEXsju",  # 123456: testpassword
-            "id": 1
+            "id": 1098
         }
     }
 

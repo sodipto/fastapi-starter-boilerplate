@@ -1,14 +1,17 @@
 from fastapi import APIRouter
-from fastapi.params import Depends
+from fastapi.params import Depends, Security
 from dependency_injector.wiring import inject, Provide
+from fastapi.security import HTTPAuthorizationCredentials
 
 from app.core.container import Container
+from app.core.jwt_security import JWTBearer
 from app.services.user_service import UserService
 
 
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
+    dependencies=[Depends(JWTBearer())]
 )
 
 

@@ -8,7 +8,7 @@ from app.core.open_api import custom_openapi
 
 app = FastAPI(
     title=f"Python FastAPI Boilerplate - {settings.ENV.capitalize()}",
-    description="This is a boilerplate for building APIs using FastAPI with dependency injection and other best practices.",
+    description="A robust FastAPI boilerplate for rapid API development, featuring dependency injection, modular routing, and environment-based configuration.",
     version="1.0.0",
     docs_url="/swagger",
     redoc_url="/redoc",

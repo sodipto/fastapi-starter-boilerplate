@@ -1,13 +1,16 @@
 import asyncio
 from typing import Optional, Dict
+import uuid
 
 class UserRepository:
     # Simulated database
     _users_db = {
         "sa@admin.com": {
+            "id": 1098,
+            "code": str(uuid.uuid4()),
             "email": "sa@admin.com",
-            "hashed_password": "$2b$12$wUDYNFpkySt5phBQmlTQ1OrpNn76S6/CnXoZ6Q3Blil3WL6ZEXsju",  # 123456: testpassword
-            "id": 1098
+            "username": "sodipto Saha",
+            "hashed_password": "$2b$12$wUDYNFpkySt5phBQmlTQ1OrpNn76S6/CnXoZ6Q3Blil3WL6ZEXsju"  # 123456:
         }
     }
 

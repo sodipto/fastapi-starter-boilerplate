@@ -1,4 +1,7 @@
 from fastapi.openapi.utils import get_openapi
+from fastapi.routing import APIRoute
+
+from app.core.jwt_security import JWTBearer
 
 def custom_openapi(app):
     if app.openapi_schema:
@@ -19,9 +22,20 @@ def custom_openapi(app):
     }
     
     # Apply to all routes globally (optional)
-    for path in openapi_schema["paths"].values():
-        for method in path.values():
-            method["security"] = [{"Bearer": []}]
+    for route in app.routes:
+            if isinstance(route, APIRoute):
+                for dep in route.dependant.dependencies:
+                    if (
+                        isinstance(dep.call, type(JWTBearer())) or
+                        isinstance(dep.call, JWTBearer)
+                    ):
+                        path = route.path
+                        methods = route.methods
+                        for method in methods:
+                            method = method.lower()
+                            if path in openapi_schema["paths"]:
+                                if method in openapi_schema["paths"][path]:
+                                    openapi_schema["paths"][path][method]["security"] = [{"Bearer": []}]
             
     app.openapi_schema = openapi_schema
     return app.openapi_schema

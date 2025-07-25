@@ -5,9 +5,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.core.config import settings
 from jose import jwt
 
+from app.utils.auth_utils import ALGORITHM
+
 def decode_jwt(token: str) -> dict:
     try:
-        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])  # Use list, not str
+        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=ALGORITHM)  # Use list, not str
         return decoded_token if decoded_token["exp"] >= int(datetime.now(timezone.utc).timestamp()) else None
     except Exception:
         return {}

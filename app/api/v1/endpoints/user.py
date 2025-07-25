@@ -4,6 +4,7 @@ from dependency_injector.wiring import inject, Provide
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.core.container import Container
+from app.core.identity import get_current_user
 from app.core.jwt_security import JWTBearer
 from app.services.user_service import UserService
 
@@ -16,8 +17,8 @@ router = APIRouter(
 
 
 @router.get("/me", summary="Get current user", response_model=dict)
-def get_me():
-    return {"username": "sodipto", "email": "sodipto.saha@asthait.com"}
+def get_me(user_id: int = Depends(get_current_user)):
+    return {"username": "sodipto", "email": "sodipto.saha@asthait.com","id": user_id}
 
 
 @router.get("/{id}", summary="Get user by ID", response_model=dict)

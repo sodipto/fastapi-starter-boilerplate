@@ -6,7 +6,8 @@ from sqlalchemy import pool
 
 from alembic import context
 import os
-from app.core.database.session import Base
+from app.core.database.base import Base
+from app.models import user
 
 env = os.getenv("APP_ENV", "development")  # default to development
 load_dotenv(f".env.{env}")

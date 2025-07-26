@@ -11,7 +11,6 @@ from app.core.open_api import custom_openapi
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_pending_migrations()
-
     yield
     
 app = FastAPI(

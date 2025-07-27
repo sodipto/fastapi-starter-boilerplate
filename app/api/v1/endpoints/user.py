@@ -1,3 +1,4 @@
+import uuid
 from fastapi import APIRouter
 from fastapi.params import Depends, Security
 from dependency_injector.wiring import inject, Provide
@@ -21,8 +22,9 @@ def get_me(user_id: int = Depends(get_current_user)):
     return {"username": "sodipto", "email": "sodipto.saha@asthait.com","id": user_id}
 
 
-@router.get("/{id}", summary="Get user by ID", response_model=dict)
+@router.get("/{id}", summary="Get user by Id", response_model=dict)
 @inject
-async def get_user_by_id(id: int, user_service: UserService = Depends(Provide[Container.user_service])):
-    username = await user_service.get_user_name(id)
+async def get_user_by_id(id: uuid.UUID, user_service: UserService = Depends(Provide[Container.user_service])):
+    username =  await user_service.get_user_name(id)
     return {"username": username, "user_id": id}
+

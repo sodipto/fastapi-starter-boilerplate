@@ -1,17 +1,19 @@
 from contextlib import asynccontextmanager
 import os
+from dependency_injector import  providers
 from app.core.container import Container
 from app.core.config import settings
 from fastapi import FastAPI
 
 from app.api.v1.routes import routers as v1_routers
 from app.core.database.migrate import run_pending_migrations
+from app.core.database.session import get_db
 from app.core.open_api import custom_openapi
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    run_pending_migrations()
-    yield
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     run_pending_migrations()
+#     yield
     
 app = FastAPI(
     title=f"Python FastAPI Boilerplate - {settings.ENV.capitalize()}",
@@ -19,10 +21,14 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/swagger",
     redoc_url="/redoc",
-    lifespan=lifespan,
+    # lifespan=lifespan,
 )
 
 app.openapi = lambda: custom_openapi(app)
-app.container = Container()
+container = Container() 
+container.init_resources()
+app.container = container
+# Override the session provider with Depends(get_db)
+# container.db_session.override(providers.Factory(get_db))
 
 app.include_router(v1_routers, prefix="/api/v1")

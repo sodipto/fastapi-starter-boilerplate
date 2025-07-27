@@ -25,6 +25,6 @@ def get_me(user_id: int = Depends(get_current_user)):
 @router.get("/{id}", summary="Get user by Id", response_model=dict)
 @inject
 async def get_user_by_id(id: uuid.UUID, user_service: UserService = Depends(Provide[Container.user_service])):
-    username =  await user_service.get_user_name(id)
+    username =  await user_service.get_user_by_id(id)
     return {"username": username, "user_id": id}
 

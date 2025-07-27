@@ -1,4 +1,4 @@
-import select
+from sqlalchemy import select
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio
@@ -9,8 +9,12 @@ from app.core.database.session import get_db
 from app.models.user import User
 
 class UserRepository:
-    def __init__(self, db: AsyncSession  = Depends(get_db)):
+    def __init__(self, db: AsyncSession):
         self.db = db
+        
+    # @classmethod
+    # async def create(cls, db: AsyncSession = Depends(get_db)):
+    #     return cls(db)
     # Simulated database
     _users_db = {
         "sa@admin.com": {
@@ -31,5 +35,11 @@ class UserRepository:
     
     async def get_user_by_id(self, id: uuid.UUID) -> User | None:
         print(f"Fetching user name for id: {id}")
-        result = await self.db.execute(select(User).where(User.id == id))
-        return result.scalars().first()
+        try:
+            result = await self.db.execute(select(User).where(User.Id == str(id)))
+            user = result.scalars().first()
+            print("User fetched:", user)
+            return user
+        except Exception as e:
+            print("❌ DB Query failed:", e)
+            raise

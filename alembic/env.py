@@ -16,7 +16,7 @@ load_dotenv(f".env.{env}")
 # access to the values within the .ini file in use.
 config = context.config
 # Set sqlalchemy.url from environment variable if present
-db_url = os.getenv("DATABASE_URL")
+db_url = os.getenv("DATABASE_URL").replace("postgresql+asyncpg:","postgresql:")
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)
 

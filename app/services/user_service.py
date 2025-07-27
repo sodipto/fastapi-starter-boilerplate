@@ -6,9 +6,9 @@ class UserService:
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
 
-    async def get_user_name(self, user_id: uuid) -> str:
+    async def get_user_by_id(self, user_id: uuid) -> str:
         user =  await self.user_repository.get_user_by_id(user_id)
         if user:
-            return user.username
+            return user.FullName
         else:
             raise ValueError("User not found!")

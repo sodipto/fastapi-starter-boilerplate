@@ -9,10 +9,10 @@ from app.core.database.migrate import run_pending_migrations
 from app.core.database.session import get_db
 from app.core.open_api import custom_openapi
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     run_pending_migrations()
-#     yield
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    run_pending_migrations()
+    yield
     
 app = FastAPI(
     title=f"Python FastAPI Boilerplate - {settings.ENV.capitalize()}",
@@ -20,7 +20,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/swagger",
     redoc_url="/redoc",
-    # lifespan=lifespan,
+    lifespan=lifespan,
 )
 
 app.openapi = lambda: custom_openapi(app)

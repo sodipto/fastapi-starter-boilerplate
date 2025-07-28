@@ -26,14 +26,14 @@ def upgrade() -> None:
     
     op.create_table('Users',
     sa.Column('Id', sa.UUID(), nullable=False),
-    sa.Column('email', sa.String(), nullable=False),
+    sa.Column('Email', sa.String(), nullable=False),
     sa.Column('FullName', sa.String(), nullable=False),
-    sa.Column('hashed_password', sa.String(), nullable=False),
+    sa.Column('Hashed_Password', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('Id'),
     schema='Identity'
     )
     op.create_index(op.f('ix_Identity_Users_Id'), 'Users', ['Id'], unique=False, schema='Identity')
-    op.create_index(op.f('ix_Identity_Users_email'), 'Users', ['email'], unique=True, schema='Identity')
+    op.create_index(op.f('ix_Identity_Users_Email'), 'Users', ['Email'], unique=True, schema='Identity')
     # ### end Alembic commands ###
 
 

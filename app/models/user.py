@@ -9,6 +9,6 @@ class User(Base):
     __table_args__ = {"schema": "Identity"}
 
     Id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    email = Column(String, unique=True, index=True, nullable=False)
+    Email = Column(String, unique=True, index=True, nullable=False)
     FullName = Column(String, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    Hashed_Password = Column(String, nullable=False)

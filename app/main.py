@@ -1,12 +1,10 @@
 from contextlib import asynccontextmanager
-import os
 from app.core.container import Container
 from app.core.config import settings
 from fastapi import FastAPI
 
 from app.api.v1.routes import routers as v1_routers
 from app.core.database.migrate import run_pending_migrations
-from app.core.database.session import get_db
 from app.core.open_api import custom_openapi
 
 @asynccontextmanager

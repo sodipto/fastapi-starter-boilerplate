@@ -1,0 +1,10 @@
+#Migration
+alembic init alembic 
+alembic revision --autogenerate -m MigrationName
+alembic upgrade head
+
+
+
+
+#Sync Packages
+pip install -r requirements.txt

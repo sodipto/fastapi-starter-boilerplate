@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 import os
-from dependency_injector import  providers
 from app.core.container import Container
 from app.core.config import settings
 from fastapi import FastAPI
@@ -28,7 +27,5 @@ app.openapi = lambda: custom_openapi(app)
 container = Container() 
 container.init_resources()
 app.container = container
-# Override the session provider with Depends(get_db)
-# container.db_session.override(providers.Factory(get_db))
 
 app.include_router(v1_routers, prefix="/api/v1")

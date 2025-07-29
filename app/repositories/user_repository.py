@@ -15,7 +15,6 @@ class UserRepository:
         return user
     
     async def get_user_by_id(self, id: uuid.UUID) -> User | None:
-        print(f"Fetching user name for id: {id}")
         result = await self.db.execute(select(User).where(User.Id == str(id)))
         user = result.scalars().first()
         return user

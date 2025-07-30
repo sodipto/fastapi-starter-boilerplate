@@ -10,7 +10,7 @@ class UserRepository:
         self.db = db
         
     async def get_user_by_email(self, email: str) -> User | None:
-        result = await self.db.execute(select(User).where(User.Email == email))
+        result = await self.db.execute(select(User).where(User.Email == email.lower()))
         user = result.scalars().first()
         return user
     

@@ -1,12 +1,13 @@
 from logging.config import fileConfig
 
 from dotenv import load_dotenv
-from sqlalchemy import engine_from_config
+from sqlalchemy import engine_from_config, text
 from sqlalchemy import pool
 
 from alembic import context
 import os
 from app.core.database.base import Base
+from app.core.database.schema import ensure_schemas_exist
 from app.models import user
 
 env = os.getenv("APP_ENV", "development")  # default to development
@@ -75,6 +76,10 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        print(">>> Ensuring schemas exist")
+        with connection.begin():
+            ensure_schemas_exist(connection)
+            
         context.configure(
             connection=connection, target_metadata=target_metadata
         )

@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from dependency_injector.wiring import inject, Provide
 from pydantic import BaseModel,EmailStr, Field
 
@@ -24,13 +24,6 @@ async def login(
 ):
     user = await auth_service.authenticate_user(payload.email, payload.password)
     
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password!",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
     access_token = create_access_token(
         data={
             "id": str(user.Id),

@@ -1,4 +1,5 @@
 from typing import Dict, Optional
+from fastapi import HTTPException,status
 from app.repositories.user_repository import UserRepository
 from app.utils.auth_utils import verify_password
 
@@ -12,5 +13,10 @@ class AuthService:
         if not user:
             return None
         if not verify_password(password, user.Hashed_Password):
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password!",
+                headers={"WWW-Authenticate": "Bearer"},
+        )
+             
         return user

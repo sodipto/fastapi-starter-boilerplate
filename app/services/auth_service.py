@@ -1,5 +1,4 @@
 from typing import Dict, Optional
-from fastapi import HTTPException,status
 from app.repositories.user_repository import UserRepository
 from app.utils.auth_utils import verify_password
 from app.utils.exception_utils import NotFoundException, UnauthorizedException

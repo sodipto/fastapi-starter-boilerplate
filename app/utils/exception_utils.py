@@ -18,9 +18,9 @@ class NotFoundException(Exception):
         }
 
 class UnauthorizedException(Exception):
-    def __init__(self, key: str, message: str):
+    def __init__(self, message: str):
         self.type = "UnauthorizedException"
         self.status_code = status.HTTP_401_UNAUTHORIZED
         self.messages = {
-            key: message,
+            "Unauthorized": message,
         }

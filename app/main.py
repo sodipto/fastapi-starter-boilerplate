@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from app.api.v1.routes import routers as v1_routers
 from app.core.database.migrate import run_pending_migrations
+from app.core.middlewares.exception_middleware import CustomExceptionMiddleware
 from app.core.open_api import custom_openapi
 
 @asynccontextmanager
@@ -25,5 +26,6 @@ app.openapi = lambda: custom_openapi(app)
 container = Container() 
 container.init_resources()
 app.container = container
+app.add_middleware(CustomExceptionMiddleware)
 
 app.include_router(v1_routers, prefix="/api/v1")

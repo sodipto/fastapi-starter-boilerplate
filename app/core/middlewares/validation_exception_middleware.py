@@ -3,9 +3,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi import Request
 from fastapi import status
-from app.schema.error_schema import ErrorBody, ErrorResponse
+from app.schema.response.error_schema import ErrorBody, ErrorResponse
 
 def custom_validation_exception_middleware(request: Request, exc: RequestValidationError):
+    print(request.method)
     messages = {}
     for err in exc.errors():
         loc_parts = err.get("loc", [])

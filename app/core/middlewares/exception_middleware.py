@@ -3,7 +3,7 @@ import uuid
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
-from app.schema.error_schema import ErrorBody, ErrorResponse
+from app.schema.response.error_schema import ErrorBody, ErrorResponse
 from app.utils.exception_utils import BadRequestException, NotFoundException, UnauthorizedException
 
 class CustomExceptionMiddleware(BaseHTTPMiddleware):

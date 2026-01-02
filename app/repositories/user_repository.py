@@ -10,11 +10,11 @@ class UserRepository:
         self.db = db
         
     async def get_by_email(self, email: str) -> User | None:
-        result = await self.db.execute(select(User).where(User.Email == email.lower()))
+        result = await self.db.execute(select(User).where(User.email == email.lower()))
         user = result.scalars().first()
         return user
 
     async def get_by_id(self, id: uuid.UUID) -> User | None:
-        result = await self.db.execute(select(User).where(User.Id == str(id)))
+        result = await self.db.execute(select(User).where(User.id == str(id)))
         user = result.scalars().first()
         return user

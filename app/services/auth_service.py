@@ -37,8 +37,8 @@ class AuthService:
                 refresh_token="",
             ),
             userInfo=UserResponse(
-                id=user.Id,
-                email=user.Email,
-                full_name=user.FullName,
+                id=user.id,
+                email=user.email,
+                full_name=user.full_name,
             ),
         )

@@ -11,13 +11,18 @@ from app.core.database.migrate import run_pending_migrations
 from app.core.middlewares.exception_middleware import CustomExceptionMiddleware
 from app.core.middlewares.validation_exception_middleware import custom_validation_exception_middleware
 from app.core.open_api import custom_openapi
+from app.core.seeders.application import ApplicationSeeder
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
+async def startup(app: FastAPI):
     print("Starting up application...")
     if settings.DATABASE_ENABLED:
         run_pending_migrations()
+        try:
+            await ApplicationSeeder().seed_data()
+        except Exception as e:
+            print(f"Seeding failed: {e}")
+            raise SystemExit("Application startup aborted due to seeding failure.")
     yield
 
     # Shutdown
@@ -29,7 +34,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/swagger",
     redoc_url="/redoc",
-    lifespan=lifespan,
+    lifespan=startup,
 )
 
 app.openapi = lambda: custom_openapi(app)

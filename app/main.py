@@ -6,7 +6,7 @@ from app.core.container import Container
 from app.core.config import settings
 from fastapi import FastAPI
 
-from app.api.v1.routes import routers as v1_routers
+from app.api.endpoints.routes import routers as v1_routers
 from app.core.database.migrate import run_pending_migrations
 from app.core.middlewares.exception_middleware import CustomExceptionMiddleware
 from app.core.middlewares.validation_exception_middleware import custom_validation_exception_middleware

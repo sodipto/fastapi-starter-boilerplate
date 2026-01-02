@@ -7,8 +7,8 @@ from app.core.database.session import async_session
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         modules=[
-            "app.api.v1.endpoints.user",
-            "app.api.v1.endpoints.auth",
+            "app.api.endpoints.v1.user",
+            "app.api.endpoints.v1.auth",
         ]
     )
 

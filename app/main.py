@@ -14,8 +14,14 @@ from app.core.open_api import custom_openapi
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    run_pending_migrations()
+    # Startup
+    print("Starting up application...")
+    if settings.DATABASE_ENABLED:
+        run_pending_migrations()
     yield
+
+    # Shutdown
+    print("Shutting down application...")
     
 app = FastAPI(
     title=f"Python FastAPI Boilerplate - {settings.ENV.capitalize()}",

@@ -1,8 +1,8 @@
 from sqlalchemy.schema import CreateSchema
 
 class DbSchemas:
-    identity = "Identity"
-    logger = "Logger"
+    identity = "identity"
+    logger = "logger"
 
 def ensure_schemas_exist(engine):
     for schema_name in (value for key, value in vars(DbSchemas).items() if not key.startswith("__") and isinstance(value, str)):

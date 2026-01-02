@@ -22,9 +22,8 @@ def get_me(user_id: int = Depends(get_current_user)):
     return {"username": "sodipto", "email": "sodipto.saha@asthait.com","id": user_id}
 
 
-@router.get("/{id}", summary="Get user by Id", response_model=dict)
+@router.get("/{user_id}", summary="Get user by Id", response_model=dict)
 @inject
-async def get_user_by_id(id: uuid.UUID, user_service: UserService = Depends(Provide[Container.user_service])):
-    username =  await user_service.get_user_by_id(id)
-    return {"username": username, "user_id": id}
-
+async def get_by_id(user_id: uuid.UUID, user_service: UserService = Depends(Provide[Container.user_service])):
+    username =  await user_service.get_user_by_id(user_id)
+    return {"username": username, "user_id": user_id}

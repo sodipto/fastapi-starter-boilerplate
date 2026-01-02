@@ -18,11 +18,11 @@ class ApplicationSeeder:
 
     async def seed_admin_user(self, session: AsyncSession):
         user = User(
-            Email="sa@example.com",
-            FullName="Super Admin",
-            Hashed_Password=get_password_hash("123456"),
+            email="sa@example.com",
+            full_name="Super Admin",
+            password=get_password_hash("123456"),
         )
-        stmt = select(User).where(User.Email == user.Email)
+        stmt = select(User).where(User.email == user.email  )
         result = await session.execute(stmt)
         existing_user = result.scalar_one_or_none()
 
@@ -31,8 +31,8 @@ class ApplicationSeeder:
             await session.commit()
             print("User seeded successfully.")
         else:
-            existing_user.FullName = user.FullName
-            existing_user.Hashed_Password = user.Hashed_Password
+            existing_user.full_name = user.full_name
+            existing_user.password = user.password
             session.add(existing_user)
             await session.commit()
             print("User updated successfully.")

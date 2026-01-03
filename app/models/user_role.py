@@ -32,5 +32,5 @@ class UserRole(Base, AuditableEntity):
         index=True
     )
 
-    user = relationship("User", back_populates="user_roles")
-    role = relationship("Role", back_populates="user_roles")
+    user = relationship("User")
+    role = relationship("Role")

@@ -1,8 +1,8 @@
 """added_identity_tables
 
-Revision ID: 8b67b1ff4dc3
+Revision ID: 969b5cedf9d1
 Revises: 
-Create Date: 2026-01-03 19:58:24.361403
+Create Date: 2026-01-03 20:26:04.753678
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8b67b1ff4dc3'
+revision: str = '969b5cedf9d1'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,10 +28,10 @@ def upgrade() -> None:
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('is_system', sa.Boolean(), nullable=False),
     sa.Column('created_by', sa.UUID(), nullable=False),
-    sa.Column('created_on', sa.DateTime(), nullable=False),
-    sa.Column('last_modified_by', sa.UUID(), nullable=True),
-    sa.Column('last_modified_on', sa.DateTime(), nullable=True),
-    sa.Column('deleted_on', sa.DateTime(), nullable=True),
+    sa.Column('created_on', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('last_modified_by', sa.UUID(), nullable=False),
+    sa.Column('last_modified_on', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('deleted_on', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_by', sa.UUID(), nullable=True),
     sa.Column('deleted', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
@@ -44,10 +44,10 @@ def upgrade() -> None:
     sa.Column('full_name', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
     sa.Column('created_by', sa.UUID(), nullable=False),
-    sa.Column('created_on', sa.DateTime(), nullable=False),
-    sa.Column('last_modified_by', sa.UUID(), nullable=True),
-    sa.Column('last_modified_on', sa.DateTime(), nullable=True),
-    sa.Column('deleted_on', sa.DateTime(), nullable=True),
+    sa.Column('created_on', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('last_modified_by', sa.UUID(), nullable=False),
+    sa.Column('last_modified_on', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('deleted_on', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_by', sa.UUID(), nullable=True),
     sa.Column('deleted', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
@@ -60,10 +60,10 @@ def upgrade() -> None:
     sa.Column('claim_name', sa.String(), nullable=False),
     sa.Column('role_id', sa.UUID(), nullable=False),
     sa.Column('created_by', sa.UUID(), nullable=False),
-    sa.Column('created_on', sa.DateTime(), nullable=False),
-    sa.Column('last_modified_by', sa.UUID(), nullable=True),
-    sa.Column('last_modified_on', sa.DateTime(), nullable=True),
-    sa.Column('deleted_on', sa.DateTime(), nullable=True),
+    sa.Column('created_on', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('last_modified_by', sa.UUID(), nullable=False),
+    sa.Column('last_modified_on', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('deleted_on', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_by', sa.UUID(), nullable=True),
     sa.Column('deleted', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['role_id'], ['identity.roles.id'], ondelete='CASCADE'),
@@ -76,10 +76,10 @@ def upgrade() -> None:
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('role_id', sa.UUID(), nullable=False),
     sa.Column('created_by', sa.UUID(), nullable=False),
-    sa.Column('created_on', sa.DateTime(), nullable=False),
-    sa.Column('last_modified_by', sa.UUID(), nullable=True),
-    sa.Column('last_modified_on', sa.DateTime(), nullable=True),
-    sa.Column('deleted_on', sa.DateTime(), nullable=True),
+    sa.Column('created_on', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('last_modified_by', sa.UUID(), nullable=False),
+    sa.Column('last_modified_on', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('deleted_on', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_by', sa.UUID(), nullable=True),
     sa.Column('deleted', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['role_id'], ['identity.roles.id'], ondelete='CASCADE'),

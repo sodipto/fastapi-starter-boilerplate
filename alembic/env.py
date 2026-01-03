@@ -8,7 +8,9 @@ from alembic import context
 import os
 from app.core.database.base import Base
 from app.core.database.schema import ensure_schemas_exist
-from app.models import user
+import importlib
+import pkgutil
+from app.models import __path__ as models_path
 
 env = os.getenv("APP_ENV", "development")  # default to development
 load_dotenv(f".env.{env}")
@@ -87,6 +89,10 @@ def run_migrations_online() -> None:
         with context.begin_transaction():
             context.run_migrations()
 
+
+# Dynamically import all modules in the app.models package
+for _, module_name, _ in pkgutil.iter_modules(models_path):
+    importlib.import_module(f"app.models.{module_name}")
 
 if context.is_offline_mode():
     run_migrations_offline()

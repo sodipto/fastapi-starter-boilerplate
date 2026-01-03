@@ -4,8 +4,9 @@ from sqlalchemy import Column, Integer, String
 
 from app.core.database.base import Base
 from app.core.database.schema import DbSchemas
+from app.models.auditable_entity import AuditableEntity
 
-class User(Base):
+class User(Base, AuditableEntity):
     __tablename__ = "users"
     __table_args__ = {"schema": DbSchemas.identity}
 

@@ -1,4 +1,4 @@
-﻿# 🚀 Python FastAPI Boilerplate
+﻿# 🚀 Python FastAPI Starter Boilerplate
 
 A robust, production-ready FastAPI boilerplate designed for rapid API development with modern best practices, dependency injection, modular architecture, and comprehensive error handling.
 

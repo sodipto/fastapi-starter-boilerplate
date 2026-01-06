@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
-from typing import Tuple
+from typing import Tuple, Optional, Dict
 from uuid import UUID
 
-from jose import jwt
+from jose import jwt, JWTError
 
 from app.core.config import settings
 from app.models.user import User
@@ -51,6 +51,32 @@ class ITokenService(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_user_id_from_access_token(self, token: str) -> Optional[UUID]:
+        """
+        Extract user ID from an access token without verifying expiration.
+
+        Args:
+            token: The JWT access token
+
+        Returns:
+            User UUID if token is valid, None otherwise
+        """
+        pass
+
+    @abstractmethod
+    def verify_refresh_token(self, token: str) -> Optional[Dict]:
+        """
+        Verify and decode a refresh token.
+
+        Args:
+            token: The JWT refresh token to verify
+
+        Returns:
+            Decoded token payload if valid, None otherwise
+        """
+        pass
+
 
 class TokenService(ITokenService):
     """
@@ -85,7 +111,7 @@ class TokenService(ITokenService):
         )
 
         payload = {
-            "sub": str(user_id),
+            "user_id": str(user_id),
             "email": email,
             "exp": expiry_time,
             "iat": datetime.now(timezone.utc),
@@ -110,7 +136,7 @@ class TokenService(ITokenService):
         )
 
         payload = {
-            "sub": str(user_id),
+            "user_id": str(user_id),
             "exp": expiry_time,
             "iat": datetime.now(timezone.utc),
             "type": "refresh"
@@ -142,3 +168,56 @@ class TokenService(ITokenService):
             refresh_token=refresh_token,
             refresh_token_expiry_time=refresh_expiry
         )
+
+    def get_user_id_from_access_token(self, token: str) -> Optional[UUID]:
+        """
+        Extract user ID from an access token without verifying expiration.
+
+        Args:
+            token: The JWT access token
+
+        Returns:
+            User UUID if token is valid, None otherwise
+        """
+        try:
+            # Decode without verifying expiration
+            payload = jwt.decode(
+                token, 
+                self.secret_key, 
+                algorithms=[self.algorithm],
+                options={"verify_exp": False}
+            )
+            
+            # Verify token type
+            if payload.get("type") != "access":
+                return None
+            
+            # Extract and return user_id
+            user_id_str = payload.get("user_id")
+            if not user_id_str:
+                return None
+            
+            return UUID(user_id_str)
+        except (JWTError, ValueError):
+            return None
+
+    def verify_refresh_token(self, token: str) -> Optional[Dict]:
+        """
+        Verify and decode a refresh token.
+
+        Args:
+            token: The JWT refresh token to verify
+
+        Returns:
+            Decoded token payload if valid, None otherwise
+        """
+        try:
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            
+            # Verify token type
+            if payload.get("type") != "refresh":
+                return None
+            
+            return payload
+        except JWTError:
+            return None

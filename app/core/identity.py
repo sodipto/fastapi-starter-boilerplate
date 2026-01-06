@@ -13,7 +13,7 @@ def get_current_user(token: str = Depends(JWTBearer())
 ) -> int:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=ALGORITHM)
-        user_id= payload["id"]
+        user_id= payload["user_id"]
     except (JWTError, ValidationError):
         raise HTTPException(status_code=401,detail="Could not validate credentials!")
     if not user_id:

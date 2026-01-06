@@ -1,4 +1,6 @@
 from typing import Dict, Optional
+from uuid import UUID
+from datetime import datetime, timezone
 
 from app.repositories.user_repository import UserRepository
 from app.services.token_service import ITokenService
@@ -19,7 +21,7 @@ class AuthService:
         self.user_repository = user_repository
         self.token_service = token_service
 
-    async def authenticate_user(self, email: str, password: str) -> AuthResponse:
+    async def login(self, email: str, password: str) -> AuthResponse:
         # Verify user exists
         user = await self.user_repository.get_by_email(email)
         if not user:
@@ -35,6 +37,64 @@ class AuthService:
             )
 
         # Generate tokens
+        token_response = self.token_service.create_token_response(user)
+
+        # Update user's refresh token in database
+        user.refresh_token = token_response.refresh_token
+        user.refresh_token_expiry_time = token_response.refresh_token_expiry_time
+        await self.user_repository.update(user)
+
+        return AuthResponse(
+            tokenInfo=token_response,
+            userInfo=UserResponse(
+                id=user.id,
+                email=user.email,
+                full_name=user.full_name,
+            ),
+        )
+
+    async def refresh_token(self, access_token: str, refresh_token: str) -> AuthResponse:
+        """
+        Refresh access and refresh tokens.
+
+        Args:
+            access_token: The current access token (may be expired)
+            refresh_token: The current refresh token
+
+        Returns:
+            AuthResponse containing new token information and user details
+
+        Raises:
+            UnauthorizedException: If tokens are invalid or refresh token has expired
+            NotFoundException: If user doesn't exist
+        """
+        # Decode access token to get user_id (don't verify expiry)
+        user_id = self.token_service.get_user_id_from_access_token(access_token)
+        if not user_id:
+            raise UnauthorizedException(message="Invalid access token!")
+
+        # Fetch user from database
+        user = await self.user_repository.get_by_id(user_id)
+        if not user:
+            raise NotFoundException(
+                key="user_id",
+                message=f"User not found with id: {user_id}"
+            )
+
+        # Verify refresh token
+        refresh_payload = self.token_service.verify_refresh_token(refresh_token)
+        if not refresh_payload:
+            raise UnauthorizedException(message="Invalid refresh token!")
+
+        # Verify refresh token matches stored token
+        if user.refresh_token != refresh_token:
+            raise UnauthorizedException(message="Refresh token does not match!")
+
+        # Check if refresh token is expired
+        if user.refresh_token_expiry_time < datetime.now(timezone.utc):
+            raise UnauthorizedException(message="Refresh token has expired!")
+
+        # Generate new tokens
         token_response = self.token_service.create_token_response(user)
 
         # Update user's refresh token in database

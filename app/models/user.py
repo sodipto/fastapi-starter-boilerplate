@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import relationship
 
 
@@ -16,6 +16,8 @@ class User(Base, AuditableEntity):
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=False)
     password = Column(String, nullable=False)
+    refresh_token = Column(String, nullable=True)
+    refresh_token_expiry_time = Column(DateTime(timezone=True), nullable=True)
 
     roles = relationship(
         "UserRole",

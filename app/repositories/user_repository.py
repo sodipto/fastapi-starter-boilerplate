@@ -25,3 +25,9 @@ class UserRepository:
         result = await self.db.execute(query)
         user = result.scalars().first()
         return user
+
+    async def update(self, user: User) -> User:
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user

@@ -1,5 +1,6 @@
 from app.core.database.session import get_db
 from app.services import UserService, AuthService
+from app.services.token_service import TokenService
 from app.repositories import UserRepository
 from dependency_injector import containers, providers
 from app.core.database.session import async_session
@@ -14,13 +15,19 @@ class Container(containers.DeclarativeContainer):
 
     # Provide AsyncSession instance via the get_db dependency function
     db_session = providers.Resource(async_session)
+    
     # UserRepository receives an AsyncSession instance
     user_repository = providers.Factory(
         UserRepository,
         db=db_session
     )
 
-    # Services receive UserRepository instances
+    # TokenService singleton
+    token_service = providers.Singleton(
+        TokenService
+    )
+
+    # Services receive their dependencies
     user_service = providers.Factory(
         UserService,
         user_repository=user_repository
@@ -28,5 +35,6 @@ class Container(containers.DeclarativeContainer):
 
     auth_service = providers.Factory(
         AuthService,
-        user_repository=user_repository
+        user_repository=user_repository,
+        token_service=token_service
     )

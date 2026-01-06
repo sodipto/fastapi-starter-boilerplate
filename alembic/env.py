@@ -83,7 +83,10 @@ def run_migrations_online() -> None:
             ensure_schemas_exist(connection)
             
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            include_schemas=True,
+            version_table_schema='public'
         )
 
         with context.begin_transaction():

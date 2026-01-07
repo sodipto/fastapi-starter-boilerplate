@@ -1,21 +1,14 @@
-from typing import Dict, Optional
-from uuid import UUID
 from datetime import datetime, timezone
 
 from app.repositories.user_repository import UserRepository
-from app.services.token_service import ITokenService
+from app.services.interfaces.i_token_service import ITokenService
 from app.utils.auth_utils import verify_password
 from app.utils.exception_utils import NotFoundException, UnauthorizedException
-from app.schema.response.auth import AuthResponse, TokenResponse
+from app.schema.response.auth import AuthResponse
 from app.schema.response.user import UserResponse
 
 
 class AuthService:
-    """
-    Authentication service handling user authentication and token generation.
-    
-    This service is kept thin and delegates token generation logic to TokenService.
-    """
 
     def __init__(self, user_repository: UserRepository, token_service: ITokenService):
         self.user_repository = user_repository
@@ -54,21 +47,7 @@ class AuthService:
         )
 
     async def refresh_token(self, access_token: str, refresh_token: str) -> AuthResponse:
-        """
-        Refresh access and refresh tokens.
-
-        Args:
-            access_token: The current access token (may be expired)
-            refresh_token: The current refresh token
-
-        Returns:
-            AuthResponse containing new token information and user details
-
-        Raises:
-            UnauthorizedException: If tokens are invalid or refresh token has expired
-            NotFoundException: If user doesn't exist
-        """
-        # Decode access token to get user_id (don't verify expiry)
+        # Extract user_id from access token
         user_id = self.token_service.get_user_id_from_access_token(access_token)
         if not user_id:
             raise UnauthorizedException(message="Invalid access token!")

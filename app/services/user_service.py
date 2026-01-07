@@ -1,9 +1,10 @@
 import uuid
 from app.repositories.user_repository import UserRepository
 from app.schema.response.user import UserResponse
+from app.services.interfaces import IUserService
 
 
-class UserService:
+class UserService(IUserService):
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
 

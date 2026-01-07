@@ -22,18 +22,19 @@ class Container(containers.DeclarativeContainer):
         db=db_session
     )
 
-    # TokenService singleton
+    # TokenService singleton - implements ITokenService interface
     token_service = providers.Singleton(
         TokenService
     )
 
-    # Services receive their dependencies
-    user_service = providers.Factory(
+    # UserService singleton - implements IUserService interface
+    user_service = providers.Singleton(
         UserService,
         user_repository=user_repository
     )
 
-    auth_service = providers.Factory(
+    # AuthService singleton - implements IAuthService interface
+    auth_service = providers.Singleton(
         AuthService,
         user_repository=user_repository,
         token_service=token_service

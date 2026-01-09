@@ -221,7 +221,7 @@ postgresql+asyncpg://username:password@localhost:5432/database_name
 
 ```bash
 # Create new migration
-alembic revision --autogenerate -m "Description"
+alembic revision --autogenerate -m "migration_name"
 
 # Apply migrations
 alembic upgrade head

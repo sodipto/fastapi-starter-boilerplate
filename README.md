@@ -223,7 +223,7 @@ postgresql+asyncpg://username:password@localhost:5432/database_name
 # Create new migration
 alembic revision --autogenerate -m "migration_name"
 
-# Apply migrations
+# Apply migrations for update database
 alembic upgrade head
 
 # Rollback migration

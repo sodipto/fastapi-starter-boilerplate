@@ -10,7 +10,7 @@ A robust, production-ready FastAPI boilerplate designed for rapid API developmen
 
 ## ✨ Features
 
-- 🔐 **JWT Authentication** - Secure token-based authentication
+- 🔐 **JWT Authentication** - Secure token-based authentication and support refresh token
 - 🏗️ **Dependency Injection** - Clean architecture with dependency-injector
 - 📊 **Database Integration** - Async PostgreSQL with SQLAlchemy 2.0
 - 🔄 **Database Migrations** - Alembic for schema management
@@ -221,9 +221,9 @@ postgresql+asyncpg://username:password@localhost:5432/database_name
 
 ```bash
 # Create new migration
-alembic revision --autogenerate -m "Description"
+alembic revision --autogenerate -m "migration_name"
 
-# Apply migrations
+# Apply migrations for update database
 alembic upgrade head
 
 # Rollback migration

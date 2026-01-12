@@ -20,13 +20,15 @@ class BaseRepository(IBaseRepository[T], Generic[T]):
         self.db.add(entity)
         await self.db.commit()
         await self.db.refresh(entity)
+
         return entity
 
     async def get_by_id(self, id: uuid.UUID) -> T | None:
-        """Get entity by ID."""
+        """Get entity by id."""
         result = await self.db.execute(
             select(self.model).where(self.model.id == str(id))
         )
+
         return result.scalars().first()
 
     async def get_all(self, skip: int = 0, limit: int = 20) -> List[T]:
@@ -34,6 +36,7 @@ class BaseRepository(IBaseRepository[T], Generic[T]):
         result = await self.db.execute(
             select(self.model).offset(skip).limit(limit)
         )
+
         return list(result.scalars().all())
 
     async def update(self, entity: T) -> T:
@@ -41,19 +44,14 @@ class BaseRepository(IBaseRepository[T], Generic[T]):
         self.db.add(entity)
         await self.db.commit()
         await self.db.refresh(entity)
+
         return entity
 
     async def delete(self, id: uuid.UUID) -> bool:
-        """Delete an entity by ID."""
+        """Delete an entity by id."""
         result = await self.db.execute(
             sql_delete(self.model).where(self.model.id == str(id))
         )
         await self.db.commit()
-        return result.rowcount > 0
 
-    async def exists(self, id: uuid.UUID) -> bool:
-        """Check if entity exists by ID."""
-        result = await self.db.execute(
-            select(self.model.id).where(self.model.id == str(id))
-        )
-        return result.scalars().first() is not None
+        return result.rowcount > 0

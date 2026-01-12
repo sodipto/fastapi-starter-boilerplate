@@ -20,7 +20,7 @@ class IBaseRepository(ABC, Generic[T]):
 
     @abstractmethod
     async def get_by_id(self, id: uuid.UUID) -> T | None:
-        """Get entity by ID."""
+        """Get entity by id."""
         pass
 
     @abstractmethod
@@ -35,10 +35,5 @@ class IBaseRepository(ABC, Generic[T]):
 
     @abstractmethod
     async def delete(self, id: uuid.UUID) -> bool:
-        """Delete an entity by ID."""
-        pass
-
-    @abstractmethod
-    async def exists(self, id: uuid.UUID) -> bool:
-        """Check if entity exists by ID."""
+        """Delete an entity by id."""
         pass

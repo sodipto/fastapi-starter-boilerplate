@@ -1,11 +1,2 @@
-#Migration
-alembic init alembic 
-alembic revision --autogenerate -m MigrationName
-alembic upgrade head
-
-alembic downgrade -1 #revert the last migration
-alembic downgrade <revision_id> #To downgrade to a specific revision
-
-
 #Sync Packages
 pip install -r requirements.txt

@@ -14,7 +14,7 @@ class TokenService(ITokenService):
     def __init__(self):
         """Initialize the TokenService with JWT configuration from settings."""
         self.secret_key = settings.SECRET_KEY
-        self.algorithm = settings.TOKEN_ALGORITHM
+        self.algorithm =  "HS256"
         self.access_token_expire_minutes = settings.ACCESS_TOKEN_EXPIRE_MINUTES
         self.refresh_token_expire_days = settings.REFRESH_TOKEN_EXPIRE_DAYS
 

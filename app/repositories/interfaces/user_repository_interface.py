@@ -1,16 +1,12 @@
-from abc import ABC, abstractmethod
-from sqlalchemy.ext.asyncio import AsyncSession
+from abc import abstractmethod
 import uuid
 
 from app.models.user import User
+from app.repositories.interfaces.base_repository_interface import IBaseRepository
 
 
-class IUserRepository(ABC):
+class IUserRepository(IBaseRepository[User]):
     """Interface for user repository operations."""
-
-    def __init__(self, db: AsyncSession):
-        """Initialize repository with database session."""
-        pass
 
     @abstractmethod
     async def get_by_email(self, email: str) -> User | None:
@@ -18,16 +14,6 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, id: uuid.UUID) -> User | None:
-        """Get user by ID."""
-        pass
-
-    @abstractmethod
     async def get_by_id_with_roles(self, id: uuid.UUID) -> User | None:
         """Get user by ID with roles eagerly loaded."""
-        pass
-
-    @abstractmethod
-    async def update(self, user: User) -> User:
-        """Update user in database."""
         pass

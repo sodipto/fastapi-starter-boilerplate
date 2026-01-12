@@ -75,20 +75,6 @@ alembic history
 alembic history --verbose
 ```
 
-## Package Management
-
-### Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-Installs all required packages from requirements.txt.
-
-### Update Requirements
-```bash
-pip freeze > requirements.txt
-```
-Updates requirements.txt with currently installed packages.
-
 ## Common Migration Workflow
 
 1. **Modify your models** in `app/models/`

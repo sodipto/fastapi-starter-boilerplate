@@ -5,8 +5,10 @@ import uuid
 
 from app.models.user import User
 from app.models.user_role import UserRole
+from app.repositories.interfaces.user_repository_interface import IUserRepository
 
-class UserRepository:
+
+class UserRepository(IUserRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
         

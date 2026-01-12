@@ -1,14 +1,13 @@
 import uuid
 from fastapi import APIRouter
-from fastapi.params import Depends, Security
+from fastapi.params import Depends
 from dependency_injector.wiring import inject, Provide
-from fastapi.security import HTTPAuthorizationCredentials
 
 from app.core.container import Container
 from app.core.identity import get_current_user
 from app.core.jwt_security import JWTBearer
 from app.schema.response.user import UserResponse
-from app.services.user_service import UserService
+from app.services.interfaces.user_service_interface import IUserService
 
 
 router = APIRouter(
@@ -25,5 +24,5 @@ def get_me(user_id: int = Depends(get_current_user)):
 
 @router.get("/{user_id}", summary="Get user by Id", response_model=UserResponse)
 @inject
-async def get_by_id(user_id: uuid.UUID, user_service: UserService = Depends(Provide[Container.user_service])):
+async def get_by_id(user_id: uuid.UUID, user_service: IUserService = Depends(Provide[Container.user_service])):
     return await user_service.get_by_id(user_id)

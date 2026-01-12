@@ -7,6 +7,7 @@ from app.schema.request.auth.login import LoginRequest
 from app.schema.request.auth.refresh_token import TokenRefreshRequest
 from app.schema.response.auth import AuthResponse
 from app.services.auth_service import AuthService
+from app.services.interfaces.auth_service_interface import IAuthService
 
 router = APIRouter(
     prefix="/auth",
@@ -18,7 +19,7 @@ router = APIRouter(
 @inject
 async def login(
     payload: LoginRequest,
-    auth_service: AuthService = Depends(Provide[Container.auth_service])
+    auth_service: IAuthService = Depends(Provide[Container.auth_service])
 ):
     return await auth_service.login(payload.email, payload.password)
 
@@ -27,7 +28,7 @@ async def login(
 @inject
 async def refresh_token(
     payload: TokenRefreshRequest,
-    auth_service: AuthService = Depends(Provide[Container.auth_service])
+    auth_service: IAuthService = Depends(Provide[Container.auth_service])
 ):
     """
     Refresh access and refresh tokens.

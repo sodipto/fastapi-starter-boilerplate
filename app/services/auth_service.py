@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from app.repositories.user_repository import UserRepository
+from app.repositories.interfaces.user_repository_interface import IUserRepository
 from app.services.interfaces import IAuthService, ITokenService
 from app.utils.auth_utils import verify_password
 from app.utils.exception_utils import NotFoundException, UnauthorizedException
@@ -10,7 +10,7 @@ from app.schema.response.user import UserResponse
 
 class AuthService(IAuthService):
 
-    def __init__(self, user_repository: UserRepository, token_service: ITokenService):
+    def __init__(self, user_repository: IUserRepository, token_service: ITokenService):
         self.user_repository = user_repository
         self.token_service = token_service
 

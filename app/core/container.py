@@ -13,29 +13,26 @@ class Container(containers.DeclarativeContainer):
         ]
     )
 
-    # Provide AsyncSession instance via the get_db dependency function
+    # Request-scoped AsyncSession
     db_session = providers.Resource(async_session)
-    
-    # UserRepository receives an AsyncSession instance
+
     user_repository = providers.Factory(
         UserRepository,
         db=db_session
     )
 
-    # TokenService singleton - implements ITokenService interface
     token_service = providers.Singleton(
         TokenService
     )
 
-    # UserService singleton - implements IUserService interface
-    user_service = providers.Singleton(
+    user_service = providers.Factory(
         UserService,
         user_repository=user_repository
     )
 
-    # AuthService singleton - implements IAuthService interface
-    auth_service = providers.Singleton(
+    auth_service = providers.Factory(
         AuthService,
         user_repository=user_repository,
         token_service=token_service
     )
+

@@ -19,16 +19,21 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
         )
         return result.scalars().first()
 
-    async def get_all_paginated(self, skip: int = 0, limit: int = 20) -> tuple[list[Role], int]:
+    async def get_all_paginated(self, skip: int = 0, limit: int = 20, is_system: bool | None = None) -> tuple[list[Role], int]:
         """Get all roles with pagination and total count."""
+        # Build base query with optional is_system filter
+        base_query = select(Role)
+        if is_system is not None:
+            base_query = base_query.where(Role.is_system == is_system)
+        
         # Get total count
-        count_query = select(func.count()).select_from(Role)
+        count_query = select(func.count()).select_from(base_query.subquery())
         total_result = await self.db.execute(count_query)
         total = total_result.scalar()
         
         # Get paginated results
         result = await self.db.execute(
-            select(Role).offset(skip).limit(limit)
+            base_query.offset(skip).limit(limit)
         )
         roles = list(result.scalars().all())
         

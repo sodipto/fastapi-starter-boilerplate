@@ -4,6 +4,7 @@ from dependency_injector.wiring import inject, Provide
 
 from app.core.container import Container
 from app.core.jwt_security import JWTBearer
+from app.core.constants.pagination import PAGE, PAGE_SIZE, calculate_skip
 from app.schema.request.identity.role import RoleRequest
 from app.schema.response.role import RoleResponse
 from app.services.interfaces.role_service_interface import IRoleService
@@ -38,12 +39,13 @@ async def create(
 )
 @inject
 async def search(
-    skip: int = 0,
-    limit: int = 20,
+    page: int = PAGE,
+    page_size: int = PAGE_SIZE,
+    is_system: bool | None = None,
     role_service: IRoleService = Depends(Provide[Container.role_service])
 ):
-    """Search all roles with pagination support."""
-    return await role_service.search(skip, limit)
+    """Search all roles with pagination support. Page starts from 1."""
+    return await role_service.search(page, page_size, is_system)
 
 
 @router.get(

@@ -1,5 +1,6 @@
 import uuid
 
+from app.core.constants.pagination import calculate_skip
 from app.models.role import Role
 from app.repositories.interfaces.role_repository_interface import IRoleRepository
 from app.schema.request.identity.role import RoleRequest
@@ -57,9 +58,10 @@ class RoleService(IRoleService):
             is_system=role.is_system
         )
 
-    async def search(self, skip: int = 0, limit: int = 20) -> dict:
+    async def search(self, page: int, page_size: int, is_system: bool | None = None) -> dict:
         """Search roles with pagination."""
-        roles, total = await self.role_repository.get_all_paginated(skip, limit)
+        skip = calculate_skip(page, page_size)
+        roles, total = await self.role_repository.get_all_paginated(skip, page_size, is_system)
 
         return {
             "items": [
@@ -74,7 +76,7 @@ class RoleService(IRoleService):
             ],
             "total": total,
             "skip": skip,
-            "limit": limit
+            "limit": page_size
         }
 
     async def update(self, role_id: uuid.UUID, role_request: RoleRequest) -> RoleResponse:

@@ -19,7 +19,7 @@ class IRoleService(ABC):
         pass
 
     @abstractmethod
-    async def search(self, skip: int = 0, limit: int = 20) -> dict:
+    async def search(self, page: int, page_size: int, is_system: bool | None = None) -> dict:
         """Search roles with pagination."""
         pass
 

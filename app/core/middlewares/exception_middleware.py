@@ -4,14 +4,14 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from app.schema.response.error import ErrorBody, ErrorResponse
-from app.utils.exception_utils import BadRequestException, NotFoundException, UnauthorizedException
+from app.utils.exception_utils import BadRequestException, ConflictException, ForbiddenException, NotFoundException, UnauthorizedException
 
 class CustomExceptionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
             response = await call_next(request)
             return response
-        except (BadRequestException, NotFoundException, UnauthorizedException) as e:
+        except (BadRequestException, NotFoundException, UnauthorizedException,ForbiddenException, ConflictException) as e:
             error_response = ErrorResponse(
                 error=ErrorBody(
                     logId=str(uuid.uuid4()),

@@ -1,7 +1,9 @@
 from app.core.database.session import get_db
 from app.services import UserService, AuthService
 from app.services.token_service import TokenService
+from app.services.role_service import RoleService
 from app.repositories import UserRepository
+from app.repositories.role_repository import RoleRepository
 from dependency_injector import containers, providers
 from app.core.database.session import async_session
 
@@ -10,6 +12,7 @@ class Container(containers.DeclarativeContainer):
         modules=[
             "app.api.endpoints.v1.user",
             "app.api.endpoints.v1.auth",
+            "app.api.endpoints.v1.role",
         ]
     )
 
@@ -21,6 +24,11 @@ class Container(containers.DeclarativeContainer):
         db=db_session
     )
 
+    role_repository = providers.Factory(
+        RoleRepository,
+        db=db_session
+    )
+
     token_service = providers.Singleton(
         TokenService
     )
@@ -28,6 +36,11 @@ class Container(containers.DeclarativeContainer):
     user_service = providers.Factory(
         UserService,
         user_repository=user_repository
+    )
+
+    role_service = providers.Factory(
+        RoleService,
+        role_repository=role_repository
     )
 
     auth_service = providers.Factory(

@@ -24,3 +24,21 @@ class UnauthorizedException(Exception):
         self.messages = {
             "Unauthorized": message,
         }
+
+
+class ForbiddenException(Exception):
+    def __init__(self, key: str, message: str):
+        self.type = "ForbiddenException"
+        self.status_code = status.HTTP_403_FORBIDDEN
+        self.messages = {
+            key: message,
+        }
+
+
+class ConflictException(Exception):
+    def __init__(self, key: str, message: str):
+        self.type = "ConflictException"
+        self.status_code = status.HTTP_409_CONFLICT
+        self.messages = {
+            key: message,
+        }

@@ -20,7 +20,7 @@ class IRoleService(ABC):
         pass
 
     @abstractmethod
-    async def search(self, page: int, page_size: int, is_system: bool | None = None) -> PagedData[RoleResponse]:
+    async def search(self, page: int, page_size: int, name: str | None = None, is_system: bool | None = None) -> PagedData[RoleResponse]:
         """Search roles with pagination."""
         pass
 

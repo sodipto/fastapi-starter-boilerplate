@@ -40,13 +40,14 @@ async def create(
 )
 @inject
 async def search(
+    name: str | None = None,
     page: int = PAGE,
     page_size: int = PAGE_SIZE,
     is_system: bool | None = None,
     role_service: IRoleService = Depends(Provide[Container.role_service])
 ):
-    """Search roles with pagination support. Page starts from 1."""
-    return await role_service.search(page, page_size, is_system)
+    """Search roles with pagination support. Page starts from 1. Use 'name' to filter by role name."""
+    return await role_service.search(page, page_size, name, is_system)
 
 
 @router.get(

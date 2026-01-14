@@ -14,7 +14,7 @@ class IRoleRepository(IBaseRepository[Role]):
         pass
 
     @abstractmethod
-    async def get_all_paginated(self, skip: int = 0, limit: int = 20, is_system: bool | None = None) -> tuple[list[Role], int]:
+    async def get_all_paginated(self, skip: int = 0, limit: int = 20, name: str | None = None, is_system: bool | None = None) -> tuple[list[Role], int]:
         """Get all roles with pagination and total count."""
         pass
 

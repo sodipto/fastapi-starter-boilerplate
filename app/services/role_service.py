@@ -59,10 +59,10 @@ class RoleService(IRoleService):
             is_system=role.is_system
         )
 
-    async def search(self, page: int, page_size: int, is_system: bool | None = None) -> PagedData[RoleResponse]:
+    async def search(self, page: int, page_size: int, name: str | None = None, is_system: bool | None = None) -> PagedData[RoleResponse]:
         """Search roles with pagination."""
         skip = calculate_skip(page, page_size)
-        roles, total = await self.role_repository.get_all_paginated(skip, page_size, is_system)
+        roles, total = await self.role_repository.get_all_paginated(skip, page_size, name, is_system)
 
         role_responses = [
             RoleResponse(

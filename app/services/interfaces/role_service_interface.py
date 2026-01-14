@@ -3,6 +3,7 @@ import uuid
 
 from app.schema.request.identity.role import RoleRequest
 from app.schema.response.role import RoleResponse
+from app.schema.response.pagination import PagedData
 
 
 class IRoleService(ABC):
@@ -19,7 +20,7 @@ class IRoleService(ABC):
         pass
 
     @abstractmethod
-    async def search(self, page: int, page_size: int, is_system: bool | None = None) -> dict:
+    async def search(self, page: int, page_size: int, is_system: bool | None = None) -> PagedData[RoleResponse]:
         """Search roles with pagination."""
         pass
 

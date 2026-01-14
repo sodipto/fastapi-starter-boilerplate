@@ -5,6 +5,7 @@ from app.models.role import Role
 from app.repositories.interfaces.role_repository_interface import IRoleRepository
 from app.schema.request.identity.role import RoleRequest
 from app.schema.response.role import RoleResponse
+from app.schema.response.pagination import PagedData, create_paged_response
 from app.services.interfaces.role_service_interface import IRoleService
 from app.utils.exception_utils import NotFoundException, ForbiddenException, ConflictException
 
@@ -58,26 +59,23 @@ class RoleService(IRoleService):
             is_system=role.is_system
         )
 
-    async def search(self, page: int, page_size: int, is_system: bool | None = None) -> dict:
+    async def search(self, page: int, page_size: int, is_system: bool | None = None) -> PagedData[RoleResponse]:
         """Search roles with pagination."""
         skip = calculate_skip(page, page_size)
         roles, total = await self.role_repository.get_all_paginated(skip, page_size, is_system)
 
-        return {
-            "items": [
-                RoleResponse(
-                    id=role.id,
-                    name=role.name,
-                    normalized_name=role.normalized_name,
-                    description=role.description,
-                    is_system=role.is_system
-                )
-                for role in roles
-            ],
-            "total": total,
-            "skip": skip,
-            "limit": page_size
-        }
+        role_responses = [
+            RoleResponse(
+                id=role.id,
+                name=role.name,
+                normalized_name=role.normalized_name,
+                description=role.description,
+                is_system=role.is_system
+            )
+            for role in roles
+        ]
+
+        return create_paged_response(role_responses, total, page, page_size)
 
     async def update(self, role_id: uuid.UUID, role_request: RoleRequest) -> RoleResponse:
         """Update an existing role."""

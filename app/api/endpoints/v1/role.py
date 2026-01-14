@@ -4,9 +4,10 @@ from dependency_injector.wiring import inject, Provide
 
 from app.core.container import Container
 from app.core.jwt_security import JWTBearer
-from app.core.constants.pagination import PAGE, PAGE_SIZE, calculate_skip
+from app.core.constants.pagination import PAGE, PAGE_SIZE
 from app.schema.request.identity.role import RoleRequest
 from app.schema.response.role import RoleResponse
+from app.schema.response.pagination import PagedData
 from app.services.interfaces.role_service_interface import IRoleService
 
 
@@ -35,7 +36,7 @@ async def create(
 @router.get(
     "/search",
     summary="Search roles with pagination",
-    response_model=dict
+    response_model=PagedData[RoleResponse]
 )
 @inject
 async def search(
@@ -44,13 +45,13 @@ async def search(
     is_system: bool | None = None,
     role_service: IRoleService = Depends(Provide[Container.role_service])
 ):
-    """Search all roles with pagination support. Page starts from 1."""
+    """Search roles with pagination support. Page starts from 1."""
     return await role_service.search(page, page_size, is_system)
 
 
 @router.get(
     "/{role_id}",
-    summary="Get role by ID",
+    summary="Get role by id",
     response_model=RoleResponse
 )
 @inject
@@ -58,7 +59,7 @@ async def get(
     role_id: uuid.UUID,
     role_service: IRoleService = Depends(Provide[Container.role_service])
 ):
-    """Get a specific role by its ID."""
+    """Get a specific role by its id."""
     return await role_service.get_by_id(role_id)
 
 
@@ -87,5 +88,5 @@ async def delete(
     role_id: uuid.UUID,
     role_service: IRoleService = Depends(Provide[Container.role_service])
 ):
-    """Delete a role by ID. System roles cannot be deleted."""
+    """Delete a role by id. System roles cannot be deleted."""
     await role_service.delete(role_id)

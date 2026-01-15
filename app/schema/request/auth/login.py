@@ -1,17 +1,12 @@
 
-import re
 from typing import Annotated
 
 from pydantic import BaseModel, Field, field_validator
 from pydantic_core import PydanticCustomError
 
+from app.core.constants.validation import EMAIL_REGEX
 
-EMAIL_REGEX = re.compile(
-    r"\A(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+"
-    r"(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
-    r"(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+"
-    r"[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)\Z"
-)
+
 class LoginRequest(BaseModel):
     email: str
     password: Annotated[str, Field(description="Password must be between 6 and 8 characters")]

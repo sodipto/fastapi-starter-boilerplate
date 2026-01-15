@@ -44,7 +44,7 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
     async def name_exists(self, name: str, exclude_id: uuid.UUID | None = None) -> bool:
         """Check if role name already exists."""
         normalized_name = name.upper()
-        query = select(Role).where(Role.normalized_name == normalized_name)
+        query = select(Role).where(Role.name == normalized_name)
         
         if exclude_id:
             query = query.where(Role.id != str(exclude_id))

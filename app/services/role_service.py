@@ -42,13 +42,13 @@ class RoleService(IRoleService):
         )
 
     async def get_by_id(self, role_id: uuid.UUID) -> RoleResponse:
-        """Get role by ID."""
+        """Get role by id."""
         role = await self.role_repository.get_by_id(role_id)
 
         if not role:
             raise NotFoundException(
                 "role_id",
-                f"Role with ID {role_id} not found"
+                f"Role with id {role_id} not found"
             )
 
         return RoleResponse(
@@ -84,7 +84,7 @@ class RoleService(IRoleService):
         if not role:
             raise NotFoundException(
                 "role_id",
-                f"Role with ID {role_id} not found"
+                f"Role with id {role_id} not found"
             )
 
         # Check if it's a system role
@@ -117,13 +117,13 @@ class RoleService(IRoleService):
         )
 
     async def delete(self, role_id: uuid.UUID) -> bool:
-        """Delete a role by ID."""
+        """Delete a role by id."""
         role = await self.role_repository.get_by_id(role_id)
 
         if not role:
             raise NotFoundException(
                 "role_id",
-                f"Role with ID {role_id} not found"
+                f"Role with id {role_id} not found"
             )
 
         # Check if it's a system role

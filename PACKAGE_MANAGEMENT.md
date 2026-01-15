@@ -131,17 +131,3 @@ safety check
 ```bash
 pip audit
 ```
-
-## Development vs Production Dependencies
-
-Consider splitting requirements into multiple files:
-
-- `requirements.txt` - Production dependencies only
-- `requirements-dev.txt` - Development dependencies (testing, linting, etc.)
-- `requirements-test.txt` - Testing dependencies
-
-### Install all dependencies (dev + prod)
-```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-```

@@ -1,6 +1,6 @@
 # Package Management Guide
 
-This guide covers Python package management for the FastAPI Boilerplate project.
+This guide covers Python package management for the FastAPI Starter Boilerplate project.
 
 ## Installing Dependencies
 

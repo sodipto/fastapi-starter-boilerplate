@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     MAIL_FROM_NAME: str = "FastAPI App"
     MAIL_USE_TLS: bool = True
     MAIL_USE_SSL: bool = False
+    ENABLE_EMAIL_LOGS: bool = True
 
     model_config = SettingsConfigDict(
         env_file=f".env.{os.getenv('ENV', 'development')}",

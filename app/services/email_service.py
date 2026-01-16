@@ -80,17 +80,19 @@ class EmailService(IEmailService):
         valid_cc = self._filter_valid_emails(cc_list)
         valid_bcc = self._filter_valid_emails(bcc_list)
 
-        # Initialize email log
-        email_log = EmailLogger(
-            from_email=self.from_email,
-            subject=subject,
-            body=body,
-            to=json.dumps(list(valid_receivers.keys())) if valid_receivers else None,
-            cc=json.dumps(list(valid_cc.keys())) if valid_cc else None,
-            bcc=json.dumps(list(valid_bcc.keys())) if valid_bcc else None,
-            total_email_sent=0,
-            status=EmailStatus.FAILED
-        )
+        # Initialize email log if logging is enabled
+        email_log = None
+        if settings.ENABLE_EMAIL_LOGS:
+            email_log = EmailLogger(
+                from_email=self.from_email,
+                subject=subject,
+                body=body,
+                to=json.dumps(list(valid_receivers.keys())) if valid_receivers else None,
+                cc=json.dumps(list(valid_cc.keys())) if valid_cc else None,
+                bcc=json.dumps(list(valid_bcc.keys())) if valid_bcc else None,
+                total_email_sent=0,
+                status=EmailStatus.FAILED
+            )
 
         try:
             # Check if there are any valid recipients
@@ -98,9 +100,10 @@ class EmailService(IEmailService):
             if total_recipients == 0:
                 error_msg = "No valid recipients found. Email not sent."
                 logger.warning(error_msg)
-                email_log.error_message = error_msg
-                self.db.add(email_log)
-                await self.db.commit()
+                if settings.ENABLE_EMAIL_LOGS and email_log:
+                    email_log.error_message = error_msg
+                    self.db.add(email_log)
+                    await self.db.commit()
                 return
 
             # Create message
@@ -135,20 +138,23 @@ class EmailService(IEmailService):
             await self._send_smtp(message, all_recipients)
 
             # Update log with success
-            email_log.status = EmailStatus.SUCCESS
-            email_log.total_email_sent = len(all_recipients)
+            if settings.ENABLE_EMAIL_LOGS and email_log:
+                email_log.status = EmailStatus.SUCCESS
+                email_log.total_email_sent = len(all_recipients)
             logger.info(f"Email sent successfully to {len(all_recipients)} recipients: {subject}")
 
         except Exception as e:
             error_msg = f"Failed to send email: {str(e)}"
             logger.error(error_msg, exc_info=True)
-            email_log.error_message = error_msg
-            email_log.status = EmailStatus.FAILED
+            if settings.ENABLE_EMAIL_LOGS and email_log:
+                email_log.error_message = error_msg
+                email_log.status = EmailStatus.FAILED
 
         finally:
-            # Save email log to database
-            self.db.add(email_log)
-            await self.db.commit()
+            # Save email log to database if logging is enabled
+            if settings.ENABLE_EMAIL_LOGS and email_log:
+                self.db.add(email_log)
+                await self.db.commit()
 
     async def _add_attachment(self, message: MIMEMultipart, file_path: str) -> None:
         """Add a file attachment to the email message."""

@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     MAIL_USE_SSL: bool = False
     ENABLE_EMAIL_LOGS: bool = True
 
+    # AWS S3 settings
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = ""
+    BUCKET_NAME: str = ""
+    S3_CDN_URL: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=f".env.{os.getenv('ENV', 'development')}",
         env_file_encoding="utf-8"

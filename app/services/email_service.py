@@ -12,7 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.interfaces.email_service_interface import IEmailService
 from app.core.config import settings
-from app.models.email_logger import EmailLogger, EmailStatus
+from app.models.email_logger import EmailLogger
+from app.models.enums import EmailStatus
 
 
 logger = logging.getLogger(__name__)

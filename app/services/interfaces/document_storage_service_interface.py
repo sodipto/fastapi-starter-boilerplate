@@ -62,3 +62,39 @@ class DocumentStorageServiceInterface(ABC):
             ResponseMeta with success or error message
         """
         pass
+    
+    @abstractmethod
+    async def copy(
+        self,
+        source_key: str,
+        destination_key: str
+    ) -> str | None:
+        """
+        Copy a file from one location to another within storage.
+        
+        Args:
+            source_key: The source file key/path or full CDN URL
+            destination_key: The destination file key/path
+            
+        Returns:
+            The public URL of the copied file, or None if copy failed
+        """
+        pass
+    
+    @abstractmethod
+    async def move(
+        self,
+        source_key: str,
+        destination_key: str
+    ) -> str | None:
+        """
+        Move a file from one location to another within storage.
+        
+        Args:
+            source_key: The source file key/path or full CDN URL
+            destination_key: The destination file key/path
+            
+        Returns:
+            The public URL of the moved file, or None if move failed
+        """
+        pass

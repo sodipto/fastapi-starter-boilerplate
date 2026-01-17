@@ -62,7 +62,7 @@ class Container(containers.DeclarativeContainer):
         db=db_session
     )
 
-    file_storage_service = providers.Singleton(
+    document_storage_service = providers.Singleton(
         AwsS3DocumentStorageService
     )
 

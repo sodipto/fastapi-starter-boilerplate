@@ -24,10 +24,10 @@ class Settings(BaseSettings):
     ENABLE_EMAIL_LOGS: bool = True
 
     # AWS S3 settings
-    AWS_ACCESS_KEY_ID: str = ""
-    AWS_SECRET_ACCESS_KEY: str = ""
-    AWS_REGION: str = ""
-    BUCKET_NAME: str = ""
+    S3_AWS_ACCESS_KEY_ID: str = ""
+    S3_AWS_SECRET_ACCESS_KEY: str = ""
+    S3_AWS_REGION: str = ""
+    S3_BUCKET_NAME: str = ""
     S3_CDN_URL: str | None = None
 
     model_config = SettingsConfigDict(

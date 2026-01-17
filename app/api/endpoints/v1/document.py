@@ -15,7 +15,7 @@ router = APIRouter(prefix="/documents", tags=["Documents"])
 @inject
 async def upload_file(
     file: UploadFile = File(...),
-    file_storage_service: DocumentStorageServiceInterface = Depends(Provide[Container.file_storage_service])
+    document_storage_service: DocumentStorageServiceInterface = Depends(Provide[Container.document_storage_service])
 ):
     """
     Upload a file to S3 storage.
@@ -36,7 +36,7 @@ async def upload_file(
     file_path = f"images/{unique_filename}"
     
     # Upload file
-    file_url = await file_storage_service.upload_file(
+    file_url = await document_storage_service.upload_file(
         file=file,
         file_path=file_path,
         allowed_extensions=allowed_extensions
@@ -58,7 +58,7 @@ async def upload_file(
 @inject
 async def delete_file(
     file_key: str,
-    file_storage_service: DocumentStorageServiceInterface = Depends(Provide[Container.file_storage_service])
+    document_storage_service: DocumentStorageServiceInterface = Depends(Provide[Container.document_storage_service])
 ):
     """
     Delete a file from S3 storage.
@@ -69,6 +69,75 @@ async def delete_file(
     if not file_key:
         raise BadRequestException("file_key", "File key is required")
     
-    result = await file_storage_service.remove(file_key)
+    result = await document_storage_service.remove(file_key)
     
     return result
+
+
+@router.post("/copy", response_model=dict)
+@inject
+async def copy_file(
+    source_key: str,
+    destination_key: str,
+    document_storage_service: DocumentStorageServiceInterface = Depends(Provide[Container.document_storage_service])
+):
+    """
+    Copy a file from one location to another in S3 storage.
+    
+    Args:
+        source_key: The source file key or full CDN URL
+        destination_key: The destination file key/path (e.g., 'images/new_file.jpg')
+    """
+    if not source_key:
+        raise BadRequestException("source_key", "Source key is required")
+    
+    if not destination_key:
+        raise BadRequestException("destination_key", "Destination key is required")
+    
+    file_url = await document_storage_service.copy(source_key, destination_key)
+    
+    if file_url is None:
+        raise BadRequestException(
+            "copy",
+            "File copy failed. Please check the source key and try again."
+        )
+    
+    return {
+        "message": "File copied successfully",
+        "url": file_url
+    }
+
+
+@router.post("/move", response_model=dict)
+@inject
+async def move_file(
+    source_key: str,
+    destination_key: str,
+    document_storage_service: DocumentStorageServiceInterface = Depends(Provide[Container.document_storage_service])
+):
+    """
+    Move a file from one location to another in S3 storage.
+    
+    Args:
+        source_key: The source file key or full CDN URL
+        destination_key: The destination file key/path (e.g., 'images/new_file.jpg')
+    """
+    if not source_key:
+        raise BadRequestException("source_key", "Source key is required")
+    
+    if not destination_key:
+        raise BadRequestException("destination_key", "Destination key is required")
+    
+    file_url = await document_storage_service.move(source_key, destination_key)
+    
+    if file_url is None:
+        raise BadRequestException(
+            "move",
+            "File move failed. Please check the source key and try again."
+        )
+    
+    return {
+        "message": "File moved successfully",
+        "url": file_url
+    }
+

@@ -7,6 +7,14 @@ from app.core.container import Container
 from app.services.interfaces.document_storage_service_interface import DocumentStorageServiceInterface
 from app.schema.response.meta import ResponseMeta
 from app.utils.exception_utils import BadRequestException
+from app.core.constants.validation import (
+    ALLOWED_IMAGE_EXTENSIONS,
+    ALLOWED_VIDEO_EXTENSIONS,
+    ALLOWED_EXCEL_EXTENSIONS,
+    ALLOWED_DOC_EXTENSIONS,
+    ALLOWED_CSV_EXTENSIONS,
+    ALLOWED_PDF_EXTENSIONS
+)
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -20,15 +28,26 @@ async def upload_file(
     """
     Upload a file to S3 storage.
     
-    Example usage:
-    - Allowed extensions: .jpg, .jpeg, .png, .pdf
-    - File will be uploaded to 'images/{filename}'
+    Allowed file types:
+    - Images: .jpg, .jpeg, .png, .gif, .bmp, .webp, .svg
+    - Videos: .mp4, .avi, .mov, .wmv, .flv, .mkv, .webm
+    - Excel: .xls, .xlsx, .xlsm
+    - Documents: .doc, .docx
+    - CSV: .csv
+    - PDF: .pdf
     """
     if not file:
         raise BadRequestException("file", "No file provided")
     
-    # Define allowed extensions
-    allowed_extensions = [".jpg", ".jpeg", ".png", ".pdf"]
+    # Combine all allowed extensions
+    allowed_extensions = (
+        ALLOWED_IMAGE_EXTENSIONS +
+        ALLOWED_VIDEO_EXTENSIONS +
+        ALLOWED_EXCEL_EXTENSIONS +
+        ALLOWED_DOC_EXTENSIONS +
+        ALLOWED_CSV_EXTENSIONS +
+        ALLOWED_PDF_EXTENSIONS
+    )
     
     # Generate file path with uuid (filename_uuid.extension)
     filename, file_extension = os.path.splitext(file.filename)
@@ -41,12 +60,6 @@ async def upload_file(
         file_path=file_path,
         allowed_extensions=allowed_extensions
     )
-    
-    if file_url is None:
-        raise BadRequestException(
-            "file",
-            "File upload failed. Please check file extension and try again."
-        )
     
     return {
         "message": "File uploaded successfully",
@@ -96,12 +109,6 @@ async def copy_file(
     
     file_url = await document_storage_service.copy(source_key, destination_key)
     
-    if file_url is None:
-        raise BadRequestException(
-            "copy",
-            "File copy failed. Please check the source key and try again."
-        )
-    
     return {
         "message": "File copied successfully",
         "url": file_url
@@ -129,12 +136,6 @@ async def move_file(
         raise BadRequestException("destination_key", "Destination key is required")
     
     file_url = await document_storage_service.move(source_key, destination_key)
-    
-    if file_url is None:
-        raise BadRequestException(
-            "move",
-            "File move failed. Please check the source key and try again."
-        )
     
     return {
         "message": "File moved successfully",

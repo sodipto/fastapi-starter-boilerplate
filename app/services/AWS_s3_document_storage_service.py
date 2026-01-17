@@ -8,6 +8,7 @@ from fastapi import UploadFile
 from app.core.config import settings
 from app.services.interfaces.document_storage_service_interface import DocumentStorageServiceInterface
 from app.schema.response.meta import ResponseMeta
+from app.utils.exception_utils import BadRequestException, NotFoundException
 
 
 class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
@@ -43,18 +44,18 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
         """
         # Validate file is not null
         if file is None:
-            return None
+            raise BadRequestException("file", "No file provided")
         
         # Validate file has a filename
         if not file.filename:
-            return None
+            raise BadRequestException("file", "File must have a filename")
         
         # Get file extension
         _, file_extension = os.path.splitext(file.filename)
         
         # Validate file has an extension
         if not file_extension:
-            return None
+            raise BadRequestException("file", "File must have an extension")
         
         # Normalize extension to lowercase
         file_extension = file_extension.lower()
@@ -64,7 +65,10 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
         
         # Validate extension is in allowed list
         if file_extension not in normalized_allowed_extensions:
-            return None
+            raise BadRequestException(
+                "file", 
+                f"File extension '{file_extension}' is not allowed. Allowed extensions: {', '.join(allowed_extensions)}"
+            )
         
         try:
             # Read file content
@@ -92,10 +96,10 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
         except ClientError as e:
             # Log error in production
             print(f"Error uploading file to S3: {e}")
-            return None
+            raise BadRequestException("file", f"Failed to upload file to S3: {str(e)}")
         except Exception as e:
             print(f"Unexpected error during file upload: {e}")
-            return None
+            raise BadRequestException("file", f"Unexpected error during file upload: {str(e)}")
     
     async def upload_stream(
         self,
@@ -116,7 +120,7 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
         """
         # Validate stream is not null
         if stream is None:
-            return None
+            raise BadRequestException("stream", "No stream provided")
         
         try:
             # Upload to S3 using asyncio.to_thread for async compatibility
@@ -133,10 +137,10 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             
         except ClientError as e:
             print(f"Error uploading stream to S3: {e}")
-            return None
+            raise BadRequestException("stream", f"Failed to upload stream to S3: {str(e)}")
         except Exception as e:
             print(f"Unexpected error during stream upload: {e}")
-            return None
+            raise BadRequestException("stream", f"Unexpected error during stream upload: {str(e)}")
     
     async def remove(
         self,
@@ -219,7 +223,7 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             
             # Validate keys are not empty
             if not source_key or not destination_key:
-                return None
+                raise BadRequestException("file_key", "Source key and destination key are required")
             
             # Check if source object exists
             try:
@@ -230,8 +234,7 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
                 )
             except ClientError as e:
                 if e.response['Error']['Code'] == '404':
-                    print(f"Source file not found: {source_key}")
-                    return None
+                    raise NotFoundException("source_key", f"Source file not found: {source_key}")
                 raise
             
             # Copy object in S3 using asyncio.to_thread for async compatibility
@@ -252,10 +255,10 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             
         except ClientError as e:
             print(f"Error copying file in S3: {e}")
-            return None
+            raise BadRequestException("copy", f"Failed to copy file in S3: {str(e)}")
         except Exception as e:
             print(f"Unexpected error during file copy: {e}")
-            return None
+            raise BadRequestException("copy", f"Unexpected error during file copy: {str(e)}")
     
     async def move(
         self,
@@ -277,9 +280,6 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             # First, copy the file
             copied_url = await self.copy(source_key, destination_key)
             
-            if copied_url is None:
-                return None
-            
             # Then, delete the source file
             # We need the stripped key for deletion
             stripped_source_key = source_key
@@ -296,12 +296,18 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             
             return copied_url
             
+        except BadRequestException:
+            # Re-raise BadRequestException from copy method
+            raise
+        except NotFoundException:
+            # Re-raise NotFoundException from copy method
+            raise
         except ClientError as e:
             print(f"Error moving file in S3: {e}")
-            return None
+            raise BadRequestException("move", f"Failed to move file in S3: {str(e)}")
         except Exception as e:
             print(f"Unexpected error during file move: {e}")
-            return None
+            raise BadRequestException("move", f"Unexpected error during file move: {str(e)}")
     
     def _build_file_url(self, file_path: str) -> str:
         """

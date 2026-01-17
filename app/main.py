@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.container import Container
 from app.core.config import settings
@@ -41,6 +42,15 @@ app.openapi = lambda: custom_openapi(app)
 container = Container() 
 container.init_resources()
 app.container = container
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust as needed for production [e.g., specific domains]
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.add_middleware(CustomExceptionMiddleware)
 app.exception_handler(RequestValidationError)(custom_validation_exception_middleware)
 

@@ -6,6 +6,7 @@ from dependency_injector.wiring import inject, Provide
 from app.core.container import Container
 from app.services.interfaces.document_storage_service_interface import DocumentStorageServiceInterface
 from app.schema.response.meta import ResponseMeta
+from app.schema.response.document import DocumentOperationResponse
 from app.utils.exception_utils import BadRequestException
 from app.core.constants.validation import (
     ALLOWED_IMAGE_EXTENSIONS,
@@ -19,7 +20,7 @@ from app.core.constants.validation import (
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
 
-@router.post("/upload", response_model=dict)
+@router.post("/upload", response_model=DocumentOperationResponse)
 @inject
 async def upload_file(
     file: UploadFile = File(...),
@@ -61,33 +62,12 @@ async def upload_file(
         allowed_extensions=allowed_extensions
     )
     
-    return {
-        "message": "File uploaded successfully",
-        "url": file_url
-    }
+    return DocumentOperationResponse(
+        message="File uploaded successfully",
+        url=file_url
+    )
 
-
-@router.delete("/delete", response_model=ResponseMeta)
-@inject
-async def delete_file(
-    file_key: str,
-    document_storage_service: DocumentStorageServiceInterface = Depends(Provide[Container.document_storage_service])
-):
-    """
-    Delete a file from S3 storage.
-    
-    Args:
-        file_key: The file key or full CDN URL to delete
-    """
-    if not file_key:
-        raise BadRequestException("file_key", "File key is required")
-    
-    result = await document_storage_service.remove(file_key)
-    
-    return result
-
-
-@router.post("/copy", response_model=dict)
+@router.post("/copy", response_model=DocumentOperationResponse)
 @inject
 async def copy_file(
     source_key: str,
@@ -109,13 +89,13 @@ async def copy_file(
     
     file_url = await document_storage_service.copy(source_key, destination_key)
     
-    return {
-        "message": "File copied successfully",
-        "url": file_url
-    }
+    return DocumentOperationResponse(
+        message="File copied successfully",
+        url=file_url
+    )
 
 
-@router.post("/move", response_model=dict)
+@router.post("/move", response_model=DocumentOperationResponse)
 @inject
 async def move_file(
     source_key: str,
@@ -137,8 +117,27 @@ async def move_file(
     
     file_url = await document_storage_service.move(source_key, destination_key)
     
-    return {
-        "message": "File moved successfully",
-        "url": file_url
-    }
+    return DocumentOperationResponse(
+        message="File moved successfully",
+        url=file_url
+    )
+
+@router.delete("/delete", response_model=ResponseMeta)
+@inject
+async def delete_file(
+    file_key: str,
+    document_storage_service: DocumentStorageServiceInterface = Depends(Provide[Container.document_storage_service])
+):
+    """
+    Delete a file from S3 storage.
+    
+    Args:
+        file_key: The file key or full CDN URL to delete
+    """
+    if not file_key:
+        raise BadRequestException("file_key", "File key is required")
+    
+    result = await document_storage_service.remove(file_key)
+    
+    return result
 

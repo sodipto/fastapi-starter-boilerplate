@@ -3,8 +3,9 @@ FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    # ENV=development
+    PYTHONUNBUFFERED=1
+
+# ENV=development (uncomment if needed)
 
 # Set work directory
 WORKDIR /app

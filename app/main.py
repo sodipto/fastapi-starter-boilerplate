@@ -46,9 +46,9 @@ app.container = container
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Adjust as needed for production [e.g., specific domains]
-    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=False,
 )
 
 app.add_middleware(CustomExceptionMiddleware)

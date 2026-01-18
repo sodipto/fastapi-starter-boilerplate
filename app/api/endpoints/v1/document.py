@@ -8,7 +8,7 @@ from app.services.interfaces.document_storage_service_interface import DocumentS
 from app.schema.response.meta import ResponseMeta
 from app.schema.response.document import DocumentOperationResponse
 from app.utils.exception_utils import BadRequestException
-from app.core.constants.validation import (
+from app.core.constants.file_extensions import (
     ALLOWED_IMAGE_EXTENSIONS,
     ALLOWED_VIDEO_EXTENSIONS,
     ALLOWED_EXCEL_EXTENSIONS,

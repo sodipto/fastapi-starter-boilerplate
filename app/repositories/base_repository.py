@@ -34,7 +34,7 @@ class BaseRepository(IBaseRepository[T], Generic[T]):
     async def get_all(self, skip: int = 0, limit: int = 20) -> List[T]:
         """Get all entities with pagination."""
         result = await self.db.execute(
-            select(self.model).offset(skip).limit(limit)
+            select(self.model).order_by(self.model.id).offset(skip).limit(limit)
         )
 
         return list(result.scalars().all())

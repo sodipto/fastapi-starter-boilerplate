@@ -1,15 +1,15 @@
 from sqlalchemy import Column, DateTime, Boolean, event
-from sqlalchemy.dialects.postgresql import UUID
+from app.models.types import GUID
 import uuid
 from datetime import datetime, timezone
 
 class AuditableEntity:
-    created_by = Column(UUID(as_uuid=True), nullable=False, default=lambda: uuid.UUID(int=0))
+    created_by = Column(GUID(), nullable=False, default=lambda: uuid.UUID(int=0))
     created_on = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
-    last_modified_by = Column(UUID(as_uuid=True), nullable=False, default=lambda: uuid.UUID(int=0))
+    last_modified_by = Column(GUID(), nullable=False, default=lambda: uuid.UUID(int=0))
     last_modified_on = Column(DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     deleted_on = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(UUID(as_uuid=True), nullable=True)
+    deleted_by = Column(GUID(), nullable=True)
     deleted = Column(Boolean, nullable=False, default=False)
 
 # Automatically set timestamps for AuditableEntity

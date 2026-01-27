@@ -5,15 +5,16 @@ A robust, production-ready FastAPI boilerplate designed for rapid API developmen
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.116.1-009688?style=for-the-badge&logo=fastapi)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0.41-red?style=for-the-badge&logo=sqlalchemy)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Async-blue?style=for-the-badge&logo=postgresql)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-blue?style=for-the-badge&logo=postgresql)
+![MSSQL](https://img.shields.io/badge/SQL_Server-Supported-red?style=for-the-badge&logo=microsoftsqlserver)
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=for-the-badge&logo=docker)
 
 ## ✨ Features
 
 - 🔐 **JWT Authentication** - Secure token-based authentication and support refresh token
 - 🏗️ **Dependency Injection** - Clean architecture with dependency-injector
-- 📊 **Database Integration** - Async PostgreSQL with SQLAlchemy 2.0
-- 🔄 **Database Migrations** - Alembic for schema management
+- 📊 **Multi-Database Support** - PostgreSQL and SQL Server with async SQLAlchemy 2.0
+- 🔄 **Database Migrations** - Alembic for schema management across all providers
 - 🛡️ **Error Handling** - Comprehensive exception middleware
 - 📝 **API Documentation** - Auto-generated Swagger/OpenAPI docs
 - 🐳 **Docker Support** - Containerized deployment ready
@@ -116,7 +117,9 @@ This boilerplate follows a **Clean Architecture** pattern with clear separation 
 ### Prerequisites
 
 - Python 3.11+
-- PostgreSQL 12+
+- One of the supported databases:
+  - PostgreSQL 12+ (recommended)
+  - Microsoft SQL Server 2019+
 - Docker (optional)
 
 ### 1. Clone and Setup
@@ -141,9 +144,12 @@ cp .env.production.example .env.production
 Example `.env.development`:
 ```env
 ENV=development
+DATABASE_PROVIDER=postgresql
 DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/fastapi_boilerplate
 SECRET_KEY=your-super-secret-key-here
 ```
+
+**For other databases, see [DATABASE_PROVIDERS.md](DATABASE_PROVIDERS.md) for detailed configuration.**
 
 ### 3. Install Dependencies
 
@@ -195,17 +201,27 @@ docker run -p 8000:8000 --env-file .env.development fastapi-starter-boilerplate
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ENV` | Environment (development/production) | `development` |
-| `DATABASE_URL` | PostgreSQL connection string | Required |
+| `DATABASE_PROVIDER` | Database type (postgresql/mssql) | `postgresql` |
+| `DATABASE_URL` | Database connection string | Required |
 | `SECRET_KEY` | JWT secret key | Required |
 
 ### Database Configuration
 
-The application uses **async PostgreSQL** with SQLAlchemy 2.0:
+The application supports **PostgreSQL** and **Microsoft SQL Server** with async SQLAlchemy 2.0.
 
-```python
-# Example DATABASE_URL
-postgresql+asyncpg://username:password@localhost:5432/database_name
+**Quick Start Examples:**
+
+```bash
+# PostgreSQL (default)
+DATABASE_PROVIDER=postgresql
+DATABASE_URL=postgresql+asyncpg://username:password@localhost:5432/database_name
+
+# Microsoft SQL Server
+DATABASE_PROVIDER=mssql
+DATABASE_URL=mssql+aioodbc://username:password@localhost:1433/database_name?driver=ODBC+Driver+17+for+SQL+Server
 ```
+
+**📖 For comprehensive database setup guides, troubleshooting, and advanced configuration, see [DATABASE_PROVIDERS.md](DATABASE_PROVIDERS.md)**
 
 ## 🛠️ Development
 

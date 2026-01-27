@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy.dialects.postgresql import UUID
+from app.models.types import GUID
 from sqlalchemy import Column, String, Text, Integer
 
 from app.core.database.base import Base
@@ -13,9 +13,9 @@ class EmailLogger(Base, AuditableEntity):
     __tablename__ = "email_logs"
     __table_args__ = {"schema": DbSchemas.logger}
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    from_email = Column(String, nullable=False)
-    subject = Column(String, nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    from_email = Column(String(256), nullable=False)
+    subject = Column(String(500), nullable=False)
     body = Column(Text, nullable=False)
     to = Column(Text, nullable=True)  # Stored as JSON string
     cc = Column(Text, nullable=True)  # Stored as JSON string

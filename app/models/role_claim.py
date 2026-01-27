@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from app.models.types import GUID
 from sqlalchemy.orm import relationship
 
 from app.core.database.base import Base
@@ -11,12 +11,12 @@ class RoleClaim(Base, AuditableEntity):
     __tablename__ = "role_claims"
     __table_args__ = {"schema": DbSchemas.identity}
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    claim_type = Column(String, nullable=False)
-    claim_name = Column(String, nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    claim_type = Column(String(256), nullable=False)
+    claim_name = Column(String(256), nullable=False)
 
     role_id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey(f"{DbSchemas.identity}.roles.id", ondelete="CASCADE"),
         nullable=False,
         index=True

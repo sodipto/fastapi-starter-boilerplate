@@ -8,6 +8,7 @@ from alembic import context
 import os
 from app.core.database.base import Base
 from app.core.database.schema import ensure_schemas_exist
+from app.core.database.provider import DatabaseProvider, DatabaseConfig
 import importlib
 import pkgutil
 from app.models import __path__ as models_path
@@ -18,10 +19,26 @@ load_dotenv(f".env.{env}")
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-# Set sqlalchemy.url from environment variable if present
-db_url = os.getenv("DATABASE_URL").replace("postgresql+asyncpg:","postgresql:")
+
+# Get database provider from environment
+db_provider_str = os.getenv("DATABASE_PROVIDER", "postgresql").lower()
+try:
+    db_provider = DatabaseProvider(db_provider_str)
+except ValueError:
+    raise ValueError(
+        f"Unsupported database provider: {db_provider_str}. "
+        f"Supported providers are: {', '.join([p.value for p in DatabaseProvider])}"
+    )
+
+# Convert async URL to sync URL for migrations
+db_url = os.getenv("DATABASE_URL")
 if db_url:
-    config.set_main_option("sqlalchemy.url", db_url)
+    sync_url = DatabaseConfig.convert_url_for_sync(db_url, db_provider)
+    config.set_main_option("sqlalchemy.url", sync_url)
+
+# Get default schema for the provider
+default_schema = DatabaseConfig.get_default_schema(db_provider)
+supports_schemas = DatabaseConfig.supports_schemas(db_provider)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -38,6 +55,26 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+
+def render_item(type_, obj, autogen_context):
+    """
+    Custom renderer for types to ensure proper imports in migration files.
+    This fixes the issue where custom types don't get properly imported.
+    """
+    from app.models.types.guid_type import GUID
+    from app.models.types.email_status_type import EmailStatusType
+    
+    if type_ == "type" and isinstance(obj, GUID):
+        autogen_context.imports.add("from app.models.types.guid_type import GUID")
+        return "GUID()"
+    
+    if type_ == "type" and isinstance(obj, EmailStatusType):
+        autogen_context.imports.add("from app.models.types.email_status_type import EmailStatusType")
+        return f"EmailStatusType(length={obj.length})"
+    
+    # Fall back to default rendering
+    return False
 
 
 def run_migrations_offline() -> None:
@@ -58,6 +95,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        render_item=render_item,
     )
 
     with context.begin_transaction():
@@ -78,16 +116,27 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        print(">>> Ensuring schemas exist")
-        with connection.begin():
-            ensure_schemas_exist(connection)
+        # Only ensure schemas exist if the provider supports them
+        if supports_schemas:
+            print(f">>> Ensuring schemas exist for {db_provider.value}")
+            with connection.begin():
+                ensure_schemas_exist(connection, db_provider)
+        else:
+            print(f">>> Skipping schema creation for {db_provider.value} (not supported)")
             
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            include_schemas=True,
-            version_table_schema='public'
-        )
+        # Configure context based on schema support
+        context_config = {
+            "connection": connection,
+            "target_metadata": target_metadata,
+            "render_item": render_item,
+        }
+        
+        if supports_schemas:
+            context_config["include_schemas"] = True
+            if default_schema:
+                context_config["version_table_schema"] = default_schema
+        
+        context.configure(**context_config)
 
         with context.begin_transaction():
             context.run_migrations()

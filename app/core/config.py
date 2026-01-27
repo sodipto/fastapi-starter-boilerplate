@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     ENV: str
     DATABASE_URL: str
+    DATABASE_PROVIDER: str = "postgresql"  # Options: postgresql, mssql
     SECRET_KEY: str
     DATABASE_ENABLED: bool = False
     

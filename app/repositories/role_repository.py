@@ -35,7 +35,7 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
         
         # Get paginated results
         result = await self.db.execute(
-            base_query.offset(skip).limit(limit)
+            base_query.order_by(Role.name).offset(skip).limit(limit)
         )
         roles = list(result.scalars().all())
         

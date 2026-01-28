@@ -1,10 +1,12 @@
 from app.core.database.session import get_db
 from app.services import UserService, AuthService, EmailService
+from app.services.profile_service import ProfileService
 from app.services.token_service import TokenService
 from app.services.role_service import RoleService
 from app.services.AWS_s3_document_storage_service import AwsS3DocumentStorageService
 from app.repositories import UserRepository, EmailLogRepository
 from app.repositories.role_repository import RoleRepository
+from app.repositories.profile_repository import ProfileRepository
 from dependency_injector import containers, providers
 from app.core.database.session import async_session
 
@@ -16,6 +18,7 @@ class Container(containers.DeclarativeContainer):
             "app.api.endpoints.v1.role",
             "app.api.endpoints.v1.email",
             "app.api.endpoints.v1.document",
+            "app.api.endpoints.v1.profile",
         ]
     )
 
@@ -37,6 +40,11 @@ class Container(containers.DeclarativeContainer):
         db=db_session
     )
 
+    profile_repository = providers.Factory(
+        ProfileRepository,
+        db=db_session
+    )
+
     token_service = providers.Singleton(
         TokenService
     )
@@ -44,6 +52,11 @@ class Container(containers.DeclarativeContainer):
     user_service = providers.Factory(
         UserService,
         user_repository=user_repository
+    )
+
+    profile_service = providers.Factory(
+        ProfileService,
+        profile_repository=profile_repository
     )
 
     role_service = providers.Factory(

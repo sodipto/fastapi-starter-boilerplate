@@ -6,7 +6,6 @@ from app.core.container import Container
 from app.schema.request.auth.login import LoginRequest
 from app.schema.request.auth.refresh_token import TokenRefreshRequest
 from app.schema.response.auth import AuthResponse
-from app.services.auth_service import AuthService
 from app.services.interfaces.auth_service_interface import IAuthService
 
 router = APIRouter(

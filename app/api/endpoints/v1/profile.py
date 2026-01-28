@@ -8,6 +8,7 @@ from app.core.jwt_security import JWTBearer
 from app.schema.response.user import UserResponse
 from app.schema.request.identity.profile import UpdateProfileRequest, ChangePasswordRequest
 from app.services.interfaces.profile_service_interface import IProfileService
+from app.utils.exception_utils import BadRequestException
 
 
 router = APIRouter(
@@ -75,10 +76,13 @@ async def change_password(
         
     Raises:
         UnauthorizedException: If current password is incorrect
-        ValueError: If new password doesn't match confirmation
+        BadRequestException: If new password doesn't match confirmation
     """
     if request.new_password != request.confirm_password:
-        raise ValueError("New password and confirmation do not match")
+        raise BadRequestException(
+            key="password",
+            message="New password and confirmation do not match"
+        )
     
     return await profile_service.change_password(
         user_id=user_id,

@@ -2,7 +2,7 @@ from app.repositories.interfaces.profile_repository_interface import IProfileRep
 from app.schema.response.user import UserResponse
 from app.services.interfaces.profile_service_interface import IProfileService
 from app.utils.auth_utils import verify_password, get_password_hash
-from app.utils.exception_utils import NotFoundException, UnauthorizedException
+from app.utils.exception_utils import NotFoundException, UnauthorizedException, BadRequestException
 
 
 class ProfileService(IProfileService):
@@ -37,7 +37,10 @@ class ProfileService(IProfileService):
         # Check if email is already taken by another user
         existing_user = await self.profile_repository.get_user_by_email(email)
         if existing_user and existing_user.id != user.id:
-            raise ValueError(f"Email {email} is already in use")
+            raise BadRequestException(
+                key="email",
+                message=f"Email {email} is already in use"
+            )
         
         user.full_name = full_name
         user.email = email.lower()

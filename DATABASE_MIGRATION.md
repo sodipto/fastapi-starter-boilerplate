@@ -105,10 +105,3 @@ If you encounter conflicts, you may need to merge migration heads:
 ```bash
 alembic merge heads -m "merge_migrations"
 ```
-
-### Reset migrations (development only)
-```bash
-alembic downgrade base
-# Then drop all tables manually or recreate database
-alembic upgrade head
-```

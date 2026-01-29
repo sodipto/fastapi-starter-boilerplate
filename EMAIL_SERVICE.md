@@ -424,7 +424,3 @@ This creates the `identity.email_logs` table.
 - `Pydantic`: Settings management
 - `FastAPI`: Web framework
 - `dependency-injector`: Dependency injection
-
-## License
-
-This implementation follows your project's license.

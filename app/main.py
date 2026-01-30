@@ -55,3 +55,9 @@ app.add_middleware(CustomExceptionMiddleware)
 app.exception_handler(RequestValidationError)(custom_validation_exception_middleware)
 
 app.include_router(v1_routers, prefix="/api/v1")
+
+
+@app.get("/health", include_in_schema=False)
+async def health_check():
+    """Health check endpoint to verify the application is running."""
+    return {"status": "healthy"}

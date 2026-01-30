@@ -182,6 +182,15 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 - **ReDoc**: http://localhost:8000/redoc
 - **OpenAPI JSON**: http://localhost:8000/openapi.json
 
+### 7. Health Check
+
+The application provides a health check endpoint for monitoring and container orchestration:
+
+- **Endpoint**: `GET /health`
+- **Response**: `{"status": "healthy"}`
+
+> **Note**: This endpoint is excluded from Swagger documentation.
+
 ## 🐳 Docker Deployment
 
 ### Build and Run with Docker

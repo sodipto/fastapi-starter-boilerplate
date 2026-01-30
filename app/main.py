@@ -13,6 +13,7 @@ from app.core.middlewares.exception_middleware import CustomExceptionMiddleware
 from app.core.middlewares.validation_exception_middleware import custom_validation_exception_middleware
 from app.core.open_api import custom_openapi
 from app.core.seeders.application import ApplicationSeeder
+from app.jobs import register_all_jobs
 
 @asynccontextmanager
 async def startup(app: FastAPI):
@@ -24,10 +25,22 @@ async def startup(app: FastAPI):
         except Exception as e:
             print(f"Seeding failed: {e}")
             raise SystemExit("Application startup aborted due to seeding failure.")
+    
+    # Initialize and start the background scheduler
+    scheduler_service = None
+    if settings.BACKGROUND_JOBS_ENABLED:
+        scheduler_service = app.container.scheduler_service()
+        register_all_jobs(scheduler_service)
+        scheduler_service.start()
+        print("Background scheduler started.")
+    
     yield
 
     # Shutdown
     print("Shutting down application...")
+    if scheduler_service:
+        scheduler_service.shutdown()
+        print("Background scheduler stopped.")
     
 app = FastAPI(
     title=f"Python FastAPI Boilerplate - {settings.ENV.capitalize()}",

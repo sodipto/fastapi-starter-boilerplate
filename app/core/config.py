@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     DATABASE_PROVIDER: str = "postgresql"  # Options: postgresql, mssql
     SECRET_KEY: str
     DATABASE_ENABLED: bool = False
+    BACKGROUND_JOBS_ENABLED: bool = False
     
     # Token expiration settings
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15

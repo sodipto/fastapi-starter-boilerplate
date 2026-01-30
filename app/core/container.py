@@ -1,5 +1,5 @@
 from app.core.database.session import get_db
-from app.services import UserService, AuthService, EmailService
+from app.services import UserService, AuthService, EmailService, SchedulerService
 from app.services.profile_service import ProfileService
 from app.services.token_service import TokenService
 from app.services.role_service import RoleService
@@ -77,5 +77,9 @@ class Container(containers.DeclarativeContainer):
 
     document_storage_service = providers.Singleton(
         AwsS3DocumentStorageService
+    )
+
+    scheduler_service = providers.Singleton(
+        SchedulerService
     )
 

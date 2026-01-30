@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Callable, Any
 
 
@@ -27,25 +28,21 @@ class ISchedulerService(ABC):
         pass
 
     @abstractmethod
-    def register_interval_job(
+    def schedule_once(
         self,
         job_id: str,
         func: Callable[..., Any],
-        seconds: int = 0,
-        minutes: int = 0,
-        hours: int = 0,
+        run_at: datetime,
         *args,
         **kwargs
     ) -> None:
         """
-        Register a job with an interval.
+        Schedule a one-time job to run at a specific datetime.
         
         Args:
             job_id: Unique identifier for the job
             func: The function to execute
-            seconds: Interval in seconds
-            minutes: Interval in minutes
-            hours: Interval in hours
+            run_at: The datetime when the job should run
             *args: Positional arguments to pass to the function
             **kwargs: Keyword arguments to pass to the function
         """

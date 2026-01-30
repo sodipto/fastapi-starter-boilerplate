@@ -1,8 +1,9 @@
+from datetime import datetime
 import logging
-from typing import Callable, Any
+from typing import Callable, Any, Union
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.executors.pool import ThreadPoolExecutor
@@ -132,32 +133,42 @@ class SchedulerService(ISchedulerService):
             logger.error(f"Failed to register job '{job_id}': {e}")
             raise
 
-    def register_interval_job(
+    def schedule_once(
         self,
         job_id: str,
         func: Callable[..., Any],
-        seconds: int = 0,
-        minutes: int = 0,
-        hours: int = 0,
+        run_at: datetime,
         *args,
         **kwargs
     ) -> None:
         """
-        Register a job with an interval.
+        Schedule a one-time job to run at a specific datetime.
         
         Args:
             job_id: Unique identifier for the job
-            func: The function to execute
-            seconds: Interval in seconds
-            minutes: Interval in minutes
-            hours: Interval in hours
+            func: The function to execute (can be sync or async)
+            run_at: The datetime when the job should run
+            *args: Positional arguments to pass to the function
+            **kwargs: Keyword arguments to pass to the function
+            
+        Examples:
+            # Run 10 seconds from now
+            scheduler.schedule_once(
+                "send_email_123",
+                send_email_func,
+                datetime.now(timezone.utc) + timedelta(seconds=10),
+                email="user@example.com"
+            )
+            
+            # Run at a specific time
+            scheduler.schedule_once(
+                "report_job",
+                generate_report,
+                datetime(2026, 2, 1, 9, 0, 0, tzinfo=timezone.utc)
+            )
         """
         try:
-            trigger = IntervalTrigger(
-                seconds=seconds,
-                minutes=minutes,
-                hours=hours
-            )
+            trigger = DateTrigger(run_date=run_at)
             
             self._scheduler.add_job(
                 func,
@@ -167,9 +178,9 @@ class SchedulerService(ISchedulerService):
                 kwargs=kwargs,
                 replace_existing=True
             )
-            logger.info(f"Registered interval job '{job_id}' (every {hours}h {minutes}m {seconds}s)")
+            print(f"[Scheduler] Scheduled one-time job '{job_id}' to run at {run_at.isoformat()}")
         except Exception as e:
-            logger.error(f"Failed to register interval job '{job_id}': {e}")
+            print(f"[Scheduler] Failed to schedule one-time job '{job_id}': {e}")
             raise
 
     def start(self) -> None:

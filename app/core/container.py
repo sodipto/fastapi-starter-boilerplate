@@ -3,10 +3,12 @@ from app.services import UserService, AuthService, EmailService, SchedulerServic
 from app.services.profile_service import ProfileService
 from app.services.token_service import TokenService
 from app.services.role_service import RoleService
+from app.services.permission_service import PermissionService
 from app.services.AWS_s3_document_storage_service import AwsS3DocumentStorageService
 from app.repositories import UserRepository, EmailLogRepository
 from app.repositories.role_repository import RoleRepository
 from app.repositories.profile_repository import ProfileRepository
+from app.repositories.permission_repository import PermissionRepository
 from dependency_injector import containers, providers
 from app.core.database.session import async_session
 
@@ -20,6 +22,7 @@ class Container(containers.DeclarativeContainer):
             "app.api.endpoints.v1.document",
             "app.api.endpoints.v1.profile",
             "app.api.endpoints.v1.cache",
+            "app.core.rbac.dependencies",  # RBAC permission dependencies
         ]
     )
 
@@ -49,6 +52,12 @@ class Container(containers.DeclarativeContainer):
         db=db_session
     )
 
+    # RBAC: Permission repository for loading user permissions
+    permission_repository = providers.Factory(
+        PermissionRepository,
+        db=db_session
+    )
+
     token_service = providers.Singleton(
         TokenService
     )
@@ -66,6 +75,13 @@ class Container(containers.DeclarativeContainer):
     role_service = providers.Factory(
         RoleService,
         role_repository=role_repository
+    )
+
+    # RBAC: Permission service with caching for authorization
+    permission_service = providers.Factory(
+        PermissionService,
+        permission_repository=permission_repository,
+        cache_service=cache_service
     )
 
     auth_service = providers.Factory(

@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter
 from fastapi.params import Depends
 from dependency_injector.wiring import inject, Provide
@@ -21,7 +22,7 @@ router = APIRouter(
 @router.get("", summary="Get current user profile", response_model=UserResponse)
 @inject
 async def get_profile(
-    user_id: int = Depends(get_current_user),
+    user_id: UUID = Depends(get_current_user),
     profile_service: IProfileService = Depends(Provide[Container.profile_service])
 ):
     """
@@ -35,7 +36,7 @@ async def get_profile(
 @inject
 async def update_profile(
     request: UpdateProfileRequest,
-    user_id: int = Depends(get_current_user),
+    user_id: UUID = Depends(get_current_user),
     profile_service: IProfileService = Depends(Provide[Container.profile_service])
 ):
     """
@@ -58,7 +59,7 @@ async def update_profile(
 @inject
 async def change_password(
     request: ChangePasswordRequest,
-    user_id: int = Depends(get_current_user),
+    user_id: UUID = Depends(get_current_user),
     profile_service: IProfileService = Depends(Provide[Container.profile_service])
 ):
     """

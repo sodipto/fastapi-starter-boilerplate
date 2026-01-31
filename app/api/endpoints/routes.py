@@ -9,6 +9,14 @@ from app.api.endpoints.v1.profile import router as profile_router
 from app.api.endpoints.v1.cache import router as cache_router
 
 routers = APIRouter()
-router_list = [user_router, auth_router, role_router, email_router, document_router, profile_router, cache_router]
+router_list = [
+    user_router, 
+    auth_router, 
+    role_router, 
+    email_router, 
+    document_router, 
+    profile_router, 
+    cache_router,
+]
 for router in router_list:
     routers.include_router(router)

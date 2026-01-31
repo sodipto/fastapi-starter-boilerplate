@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status
+from dependency_injector.wiring import inject, Provide
 
-from app.services.cache.cache_factory import get_cache_service
+from app.core.container import Container
 from app.services.interfaces.cache_service_interface import ICacheService
 from app.schema.request.cache import (
     CacheSetRequest,
@@ -22,9 +23,10 @@ router = APIRouter(
     description="Retrieve a value from the cache by key. Returns null if the key is not found or has expired.",
     response_model=CacheGetResponse
 )
+@inject
 async def get_cache(
     key: str,
-    cache_service: ICacheService = Depends(get_cache_service)
+    cache_service: ICacheService = Depends(Provide[Container.cache_service])
 ) -> CacheGetResponse:
     """
     Get a cached value by key.
@@ -50,10 +52,11 @@ async def get_cache(
     description="Store a value in the cache with an optional sliding expiration time.",
     status_code=status.HTTP_201_CREATED
 )
+@inject
 async def set_cache(
     key: str,
     request: CacheSetRequest,
-    cache_service: ICacheService = Depends(get_cache_service)
+    cache_service: ICacheService = Depends(Provide[Container.cache_service])
 ) -> dict:
     """
     Set a cached value.
@@ -84,9 +87,10 @@ async def set_cache(
     description="Remove a value from the cache by key.",
     response_model=CacheDeleteResponse
 )
+@inject
 async def delete_cache(
     key: str,
-    cache_service: ICacheService = Depends(get_cache_service)
+    cache_service: ICacheService = Depends(Provide[Container.cache_service])
 ) -> CacheDeleteResponse:
     """
     Delete a cached value by key.
@@ -111,9 +115,10 @@ async def delete_cache(
     description="Reset the sliding expiration timer for a cached value.",
     response_model=CacheRefreshResponse
 )
+@inject
 async def refresh_cache(
     key: str,
-    cache_service: ICacheService = Depends(get_cache_service)
+    cache_service: ICacheService = Depends(Provide[Container.cache_service])
 ) -> CacheRefreshResponse:
     """
     Refresh the expiration time for a cached value.
@@ -137,9 +142,10 @@ async def refresh_cache(
     summary="Check if key exists",
     description="Check if a cache key exists without retrieving the value."
 )
+@inject
 async def check_cache_exists(
     key: str,
-    cache_service: ICacheService = Depends(get_cache_service)
+    cache_service: ICacheService = Depends(Provide[Container.cache_service])
 ) -> dict:
     """
     Check if a key exists in the cache.
@@ -161,11 +167,12 @@ async def check_cache_exists(
 @router.get(
     "/stats/info",
     summary="Get cache statistics",
-    description="Get statistics about the cache (type, size, etc.).",
+    description="Get statistics about the cache (type, size, etc.)",
     response_model=CacheStatsResponse
 )
+@inject
 async def get_cache_stats(
-    cache_service: ICacheService = Depends(get_cache_service)
+    cache_service: ICacheService = Depends(Provide[Container.cache_service])
 ) -> CacheStatsResponse:
     """
     Get cache statistics.
@@ -186,8 +193,9 @@ async def get_cache_stats(
     summary="Clear all cache",
     description="Clear all entries from the cache. Use with caution!"
 )
+@inject
 async def clear_cache(
-    cache_service: ICacheService = Depends(get_cache_service)
+    cache_service: ICacheService = Depends(Provide[Container.cache_service])
 ) -> dict:
     """
     Clear all entries from the cache.

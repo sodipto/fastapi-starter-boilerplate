@@ -30,6 +30,8 @@ async def startup(app: FastAPI):
     # Initialize cache service
     cache_service = await init_cache_service()
     app.state.cache_service = cache_service
+    # Inject cache_service into the DI container
+    app.container.cache_service.override(cache_service)
     print(f"Cache service initialized (type: {settings.CACHE_TYPE})")
     
     # Initialize and start the background scheduler

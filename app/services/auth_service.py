@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from app.repositories.interfaces.user_repository_interface import IUserRepository
-from app.services.interfaces import IAuthService, ITokenService
+from app.services.interfaces import IAuthService, ITokenService, ICacheService
 from app.utils.auth_utils import verify_password
 from app.utils.exception_utils import NotFoundException, UnauthorizedException
 from app.schema.response.auth import AuthResponse
@@ -10,9 +10,15 @@ from app.schema.response.user import UserResponse
 
 class AuthService(IAuthService):
 
-    def __init__(self, user_repository: IUserRepository, token_service: ITokenService):
+    def __init__(
+        self,
+        user_repository: IUserRepository,
+        token_service: ITokenService,
+        cache_service: ICacheService
+    ):
         self.user_repository = user_repository
         self.token_service = token_service
+        self.cache_service = cache_service
 
     async def login(self, email: str, password: str) -> AuthResponse:
         # Verify user exists
@@ -36,6 +42,12 @@ class AuthService(IAuthService):
         user.refresh_token = token_response.refresh_token
         user.refresh_token_expiry_time = token_response.refresh_token_expiry_time
         await self.user_repository.update(user)
+        
+        # await self.cache_service.set(
+        #     key=f"user:{user.id}:refresh_token",
+        #     value=token_response.refresh_token,
+        #     sliding_expiration=None
+        # )
 
         return AuthResponse(
             tokenInfo=token_response,

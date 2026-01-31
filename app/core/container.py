@@ -19,11 +19,15 @@ class Container(containers.DeclarativeContainer):
             "app.api.endpoints.v1.email",
             "app.api.endpoints.v1.document",
             "app.api.endpoints.v1.profile",
+            "app.api.endpoints.v1.cache",
         ]
     )
 
     # Request-scoped AsyncSession
     db_session = providers.Resource(async_session)
+
+    # Cache service - injected from app.state during startup
+    cache_service = providers.Object(None)
 
     user_repository = providers.Factory(
         UserRepository,
@@ -67,7 +71,8 @@ class Container(containers.DeclarativeContainer):
     auth_service = providers.Factory(
         AuthService,
         user_repository=user_repository,
-        token_service=token_service
+        token_service=token_service,
+        cache_service=cache_service
     )
 
     email_service = providers.Factory(

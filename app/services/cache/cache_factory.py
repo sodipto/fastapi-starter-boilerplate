@@ -1,6 +1,3 @@
-from typing import Any
-
-from fastapi import Request
 from redis.asyncio import Redis
 
 from app.core.config import settings
@@ -21,7 +18,7 @@ async def _create_redis_client() -> Redis:
 async def init_cache_service() -> ICacheService:
     """
     Initialize and return the cache service during application startup.
-    This should be called in the lifespan context and stored in app.state.
+    This should be called in the lifespan context and injected into Container.
     
     Returns:
         The initialized cache service (singleton for the app lifecycle).
@@ -50,23 +47,3 @@ async def shutdown_cache_service(cache_service: ICacheService) -> None:
         await cache_service.stop_cleanup_task()
     elif isinstance(cache_service, RedisCacheService):
         await cache_service.close()
-
-
-async def get_cache_service(request: Request) -> ICacheService:
-    """
-    FastAPI dependency to get the cache service from app.state.
-    Use with Depends(get_cache_service) in endpoints.
-    
-    Args:
-        request: The FastAPI request object.
-        
-    Returns:
-        The cache service instance.
-        
-    Raises:
-        RuntimeError: If cache service is not initialized.
-    """
-    cache_service = getattr(request.app.state, "cache_service", None)
-    if cache_service is None:
-        raise RuntimeError("Cache service not initialized. Check app lifespan.")
-    return cache_service

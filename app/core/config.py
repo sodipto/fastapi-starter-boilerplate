@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: str = ""
     S3_CDN_URL: str | None = None
 
+    # Cache settings
+    CACHE_TYPE: str = "memory"  # Options: memory, redis
+    REDIS_URL: str = "redis://localhost:6379"
+
     model_config = SettingsConfigDict(
         env_file=f".env.{os.getenv('ENV', 'development')}",
         env_file_encoding="utf-8"

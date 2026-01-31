@@ -14,6 +14,7 @@ from app.core.middlewares.validation_exception_middleware import custom_validati
 from app.core.open_api import custom_openapi
 from app.core.seeders.application import ApplicationSeeder
 from app.jobs import register_all_jobs
+from app.services.cache.cache_factory import init_cache_service, shutdown_cache_service
 
 @asynccontextmanager
 async def startup(app: FastAPI):
@@ -25,6 +26,11 @@ async def startup(app: FastAPI):
         except Exception as e:
             print(f"Seeding failed: {e}")
             raise SystemExit("Application startup aborted due to seeding failure.")
+    
+    # Initialize cache service
+    cache_service = await init_cache_service()
+    app.state.cache_service = cache_service
+    print(f"Cache service initialized (type: {settings.CACHE_TYPE})")
     
     # Initialize and start the background scheduler
     scheduler_service = None
@@ -38,6 +44,12 @@ async def startup(app: FastAPI):
 
     # Shutdown
     print("Shutting down application...")
+    
+    # Shutdown cache service
+    await shutdown_cache_service()
+    print("Cache service shutdown.")
+    
+    # Shutdown scheduler
     if scheduler_service:
         scheduler_service.shutdown()
         print("Background scheduler stopped.")

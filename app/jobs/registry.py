@@ -17,8 +17,6 @@ Examples:
 from typing import Any, Callable, TypedDict
 
 from app.jobs.health_check import health_check_job
-from app.jobs.cleanup import cleanup_old_logs_job
-
 
 class CronJobConfig(TypedDict):
     """Configuration for a cron-based job."""
@@ -38,12 +36,6 @@ REGISTERED_JOBS: list[CronJobConfig] = [
         "job_id": "health_check",
         "func": health_check_job,
         "cron_expression": "*/1 * * * *",  # Every 1 minute
-        "enabled": True,
-    },
-    {
-        "job_id": "cleanup_old_logs",
-        "func": cleanup_old_logs_job,
-        "cron_expression": "0 0 * * *",  # Every day at midnight
         "enabled": True,
     },
 ]

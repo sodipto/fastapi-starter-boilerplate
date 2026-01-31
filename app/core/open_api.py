@@ -21,6 +21,20 @@ def custom_openapi(app):
         }
     }
     
+    # Remove 422 Validation Error from all endpoints
+    for path in openapi_schema["paths"]:
+        for method in openapi_schema["paths"][path]:
+            responses = openapi_schema["paths"][path][method].get("responses", {})
+            if "422" in responses:
+                del responses["422"]
+    
+    # Remove HTTPValidationError schema if exists
+    if "components" in openapi_schema and "schemas" in openapi_schema["components"]:
+        schemas_to_remove = ["HTTPValidationError", "ValidationError"]
+        for schema in schemas_to_remove:
+            if schema in openapi_schema["components"]["schemas"]:
+                del openapi_schema["components"]["schemas"][schema]
+    
     # Apply to all routes globally (optional)
     for route in app.routes:
             if isinstance(route, APIRoute):

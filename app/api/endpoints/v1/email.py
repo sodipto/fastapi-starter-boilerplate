@@ -7,23 +7,13 @@ with dependency injection in FastAPI endpoints.
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from dependency_injector.wiring import inject, Provide
-from pydantic import BaseModel, EmailStr
 
 from app.core.container import Container
 from app.services.interfaces.email_service_interface import IEmailService
+from app.schema.request.email import SendEmailRequest
 
 
 router = APIRouter(prefix="/email", tags=["Email"])
-
-
-class SendEmailRequest(BaseModel):
-    """Request model for sending emails."""
-    subject: str
-    body: str
-    to_emails: dict[EmailStr, str | None]
-    cc_emails: dict[EmailStr, str | None] | None = None
-    bcc_emails: dict[EmailStr, str | None] | None = None
-    attachments: list[str] | None = None
 
 
 @router.post("/send", status_code=status.HTTP_200_OK)

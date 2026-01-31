@@ -1,4 +1,3 @@
-from functools import lru_cache
 from typing import Any
 
 from redis.asyncio import Redis
@@ -14,6 +13,9 @@ _redis_client: Redis | None = None
 
 # Singleton InMemory cache instance
 _memory_cache: InMemoryCacheService | None = None
+
+# Singleton Redis cache service instance
+_redis_cache: RedisCacheService | None = None
 
 
 async def get_redis_client() -> Redis:
@@ -37,7 +39,7 @@ async def close_redis_client() -> None:
     """Close the Redis client connection."""
     global _redis_client
     if _redis_client is not None:
-        await _redis_client.close()
+        await _redis_client.aclose()
         _redis_client = None
 
 
@@ -57,16 +59,20 @@ def get_memory_cache() -> InMemoryCacheService:
 async def get_cache_service() -> ICacheService:
     """
     Factory function to get the appropriate cache service based on configuration.
+    Returns a singleton instance of the cache service.
     
     Returns:
         ICacheService: Either RedisCacheService or InMemoryCacheService
                       based on CACHE_TYPE environment variable.
     """
+    global _redis_cache
     cache_type = settings.CACHE_TYPE.lower()
     
     if cache_type == "redis":
-        redis_client = await get_redis_client()
-        return RedisCacheService(redis_client)
+        if _redis_cache is None:
+            redis_client = await get_redis_client()
+            _redis_cache = RedisCacheService(redis_client)
+        return _redis_cache
     else:
         # Default to in-memory cache
         return get_memory_cache()
@@ -94,7 +100,7 @@ async def shutdown_cache_service() -> None:
     Shutdown the cache service during application shutdown.
     This should be called in the lifespan context.
     """
-    global _memory_cache, _redis_client
+    global _memory_cache, _redis_client, _redis_cache
     
     # Stop cleanup task for in-memory cache
     if _memory_cache is not None:
@@ -103,5 +109,8 @@ async def shutdown_cache_service() -> None:
     
     # Close Redis connection
     if _redis_client is not None:
-        await _redis_client.close()
+        await _redis_client.aclose()
         _redis_client = None
+    
+    # Clear Redis cache service reference
+    _redis_cache = None

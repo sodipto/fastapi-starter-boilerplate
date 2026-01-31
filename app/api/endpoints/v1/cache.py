@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from app.services.cache.cache_factory import get_cache_service
+from app.services.interfaces.cache_service_interface import ICacheService
 from app.schema.request.cache import (
     CacheSetRequest,
     CacheGetResponse,
@@ -21,7 +22,10 @@ router = APIRouter(
     description="Retrieve a value from the cache by key. Returns null if the key is not found or has expired.",
     response_model=CacheGetResponse
 )
-async def get_cache(key: str) -> CacheGetResponse:
+async def get_cache(
+    key: str,
+    cache_service: ICacheService = Depends(get_cache_service)
+) -> CacheGetResponse:
     """
     Get a cached value by key.
     
@@ -31,7 +35,6 @@ async def get_cache(key: str) -> CacheGetResponse:
     Returns:
         CacheGetResponse containing the key, value, and whether it was found.
     """
-    cache_service = await get_cache_service()
     value = await cache_service.get(key)
     
     return CacheGetResponse(
@@ -47,7 +50,11 @@ async def get_cache(key: str) -> CacheGetResponse:
     description="Store a value in the cache with an optional sliding expiration time.",
     status_code=status.HTTP_201_CREATED
 )
-async def set_cache(key: str, request: CacheSetRequest) -> dict:
+async def set_cache(
+    key: str,
+    request: CacheSetRequest,
+    cache_service: ICacheService = Depends(get_cache_service)
+) -> dict:
     """
     Set a cached value.
     
@@ -58,7 +65,6 @@ async def set_cache(key: str, request: CacheSetRequest) -> dict:
     Returns:
         Success message with the key.
     """
-    cache_service = await get_cache_service()
     await cache_service.set(
         key=key,
         value=request.value,
@@ -78,7 +84,10 @@ async def set_cache(key: str, request: CacheSetRequest) -> dict:
     description="Remove a value from the cache by key.",
     response_model=CacheDeleteResponse
 )
-async def delete_cache(key: str) -> CacheDeleteResponse:
+async def delete_cache(
+    key: str,
+    cache_service: ICacheService = Depends(get_cache_service)
+) -> CacheDeleteResponse:
     """
     Delete a cached value by key.
     
@@ -88,7 +97,6 @@ async def delete_cache(key: str) -> CacheDeleteResponse:
     Returns:
         CacheDeleteResponse indicating whether the key was deleted.
     """
-    cache_service = await get_cache_service()
     deleted = await cache_service.remove(key)
     
     return CacheDeleteResponse(
@@ -103,7 +111,10 @@ async def delete_cache(key: str) -> CacheDeleteResponse:
     description="Reset the sliding expiration timer for a cached value.",
     response_model=CacheRefreshResponse
 )
-async def refresh_cache(key: str) -> CacheRefreshResponse:
+async def refresh_cache(
+    key: str,
+    cache_service: ICacheService = Depends(get_cache_service)
+) -> CacheRefreshResponse:
     """
     Refresh the expiration time for a cached value.
     
@@ -113,7 +124,6 @@ async def refresh_cache(key: str) -> CacheRefreshResponse:
     Returns:
         CacheRefreshResponse indicating whether the key was refreshed.
     """
-    cache_service = await get_cache_service()
     refreshed = await cache_service.refresh(key)
     
     return CacheRefreshResponse(
@@ -127,7 +137,10 @@ async def refresh_cache(key: str) -> CacheRefreshResponse:
     summary="Check if key exists",
     description="Check if a cache key exists without retrieving the value."
 )
-async def check_cache_exists(key: str) -> dict:
+async def check_cache_exists(
+    key: str,
+    cache_service: ICacheService = Depends(get_cache_service)
+) -> dict:
     """
     Check if a key exists in the cache.
     
@@ -137,7 +150,6 @@ async def check_cache_exists(key: str) -> dict:
     Returns:
         Dictionary indicating whether the key exists.
     """
-    cache_service = await get_cache_service()
     exists = await cache_service.exists(key)
     
     return {
@@ -152,14 +164,15 @@ async def check_cache_exists(key: str) -> dict:
     description="Get statistics about the cache (type, size, etc.).",
     response_model=CacheStatsResponse
 )
-async def get_cache_stats() -> CacheStatsResponse:
+async def get_cache_stats(
+    cache_service: ICacheService = Depends(get_cache_service)
+) -> CacheStatsResponse:
     """
     Get cache statistics.
     
     Returns:
         CacheStatsResponse containing cache type and statistics.
     """
-    cache_service = await get_cache_service()
     stats = await cache_service.get_stats()
     
     return CacheStatsResponse(
@@ -173,14 +186,15 @@ async def get_cache_stats() -> CacheStatsResponse:
     summary="Clear all cache",
     description="Clear all entries from the cache. Use with caution!"
 )
-async def clear_cache() -> dict:
+async def clear_cache(
+    cache_service: ICacheService = Depends(get_cache_service)
+) -> dict:
     """
     Clear all entries from the cache.
     
     Returns:
         Success message.
     """
-    cache_service = await get_cache_service()
     await cache_service.clear()
     
     return {"message": "Cache cleared successfully"}

@@ -46,8 +46,9 @@ async def startup(app: FastAPI):
     print("Shutting down application...")
     
     # Shutdown cache service
-    await shutdown_cache_service()
-    print("Cache service shutdown.")
+    if hasattr(app.state, "cache_service"):
+        await shutdown_cache_service(app.state.cache_service)
+        print("Cache service shutdown.")
     
     # Shutdown scheduler
     if scheduler_service:

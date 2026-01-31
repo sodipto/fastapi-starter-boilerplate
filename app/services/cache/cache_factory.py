@@ -1,5 +1,6 @@
 from typing import Any
 
+from fastapi import Request
 from redis.asyncio import Redis
 
 from app.core.config import settings
@@ -8,109 +9,64 @@ from app.services.cache.in_memory_cache_service import InMemoryCacheService
 from app.services.cache.redis_cache_service import RedisCacheService
 
 
-# Singleton Redis client instance
-_redis_client: Redis | None = None
-
-# Singleton InMemory cache instance
-_memory_cache: InMemoryCacheService | None = None
-
-# Singleton Redis cache service instance
-_redis_cache: RedisCacheService | None = None
-
-
-async def get_redis_client() -> Redis:
-    """
-    Get or create a singleton Redis client.
-    
-    Returns:
-        The Redis async client instance.
-    """
-    global _redis_client
-    if _redis_client is None:
-        _redis_client = Redis.from_url(
-            settings.REDIS_URL,
-            encoding="utf-8",
-            decode_responses=False
-        )
-    return _redis_client
-
-
-async def close_redis_client() -> None:
-    """Close the Redis client connection."""
-    global _redis_client
-    if _redis_client is not None:
-        await _redis_client.aclose()
-        _redis_client = None
-
-
-def get_memory_cache() -> InMemoryCacheService:
-    """
-    Get or create a singleton InMemory cache service.
-    
-    Returns:
-        The InMemoryCacheService instance.
-    """
-    global _memory_cache
-    if _memory_cache is None:
-        _memory_cache = InMemoryCacheService()
-    return _memory_cache
-
-
-async def get_cache_service() -> ICacheService:
-    """
-    Factory function to get the appropriate cache service based on configuration.
-    Returns a singleton instance of the cache service.
-    
-    Returns:
-        ICacheService: Either RedisCacheService or InMemoryCacheService
-                      based on CACHE_TYPE environment variable.
-    """
-    global _redis_cache
-    cache_type = settings.CACHE_TYPE.lower()
-    
-    if cache_type == "redis":
-        if _redis_cache is None:
-            redis_client = await get_redis_client()
-            _redis_cache = RedisCacheService(redis_client)
-        return _redis_cache
-    else:
-        # Default to in-memory cache
-        return get_memory_cache()
+async def _create_redis_client() -> Redis:
+    """Create a new Redis client instance."""
+    return Redis.from_url(
+        settings.REDIS_URL,
+        encoding="utf-8",
+        decode_responses=False
+    )
 
 
 async def init_cache_service() -> ICacheService:
     """
-    Initialize the cache service during application startup.
-    This should be called in the lifespan context.
+    Initialize and return the cache service during application startup.
+    This should be called in the lifespan context and stored in app.state.
     
     Returns:
-        The initialized cache service.
+        The initialized cache service (singleton for the app lifecycle).
     """
-    cache_service = await get_cache_service()
+    cache_type = settings.CACHE_TYPE.lower()
     
-    # Start cleanup task for in-memory cache
-    if isinstance(cache_service, InMemoryCacheService):
+    if cache_type == "redis":
+        redis_client = await _create_redis_client()
+        cache_service = RedisCacheService(redis_client)
+    else:
+        cache_service = InMemoryCacheService()
         await cache_service.start_cleanup_task()
     
     return cache_service
 
 
-async def shutdown_cache_service() -> None:
+async def shutdown_cache_service(cache_service: ICacheService) -> None:
     """
     Shutdown the cache service during application shutdown.
     This should be called in the lifespan context.
+    
+    Args:
+        cache_service: The cache service instance from app.state.
     """
-    global _memory_cache, _redis_client, _redis_cache
+    if isinstance(cache_service, InMemoryCacheService):
+        await cache_service.stop_cleanup_task()
+    elif isinstance(cache_service, RedisCacheService):
+        await cache_service.close()
+
+
+async def get_cache_service(request: Request) -> ICacheService:
+    """
+    FastAPI dependency to get the cache service from app.state.
+    Use with Depends(get_cache_service) in endpoints.
     
-    # Stop cleanup task for in-memory cache
-    if _memory_cache is not None:
-        await _memory_cache.stop_cleanup_task()
-        _memory_cache = None
-    
-    # Close Redis connection
-    if _redis_client is not None:
-        await _redis_client.aclose()
-        _redis_client = None
-    
-    # Clear Redis cache service reference
-    _redis_cache = None
+    Args:
+        request: The FastAPI request object.
+        
+    Returns:
+        The cache service instance.
+        
+    Raises:
+        RuntimeError: If cache service is not initialized.
+    """
+    cache_service = getattr(request.app.state, "cache_service", None)
+    if cache_service is None:
+        raise RuntimeError("Cache service not initialized. Check app lifespan.")
+    return cache_service

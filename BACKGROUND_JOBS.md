@@ -193,12 +193,3 @@ To disable all background jobs, set in your `.env` file:
 ```env
 BACKGROUND_JOBS_ENABLED=False
 ```
-
-## Debugging
-
-Enable debug logging to see scheduler activity:
-
-```python
-import logging
-logging.getLogger('apscheduler').setLevel(logging.DEBUG)
-```

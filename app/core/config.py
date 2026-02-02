@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Token expiration settings
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # Account settings
+    REQUIRE_EMAIL_CONFIRMED_ACCOUNT: bool = True
 
     # Email settings
     MAIL_HOST: str = "smtp.gmail.com"

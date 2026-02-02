@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
 
@@ -18,6 +18,14 @@ class User(Base, AuditableEntity):
     password = Column(String(512), nullable=False)
     refresh_token = Column(String(512), nullable=True)
     refresh_token_expiry_time = Column(DateTime(timezone=True), nullable=True)
+    profile_image_url = Column(String(1024), nullable=True)
+    phone_number = Column(String(20), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    email_confirmed = Column(Boolean, default=False, nullable=False)
+    email_verification_code = Column(GUID(), nullable=True)
+    email_verification_code_expiry_time = Column(DateTime(timezone=True), nullable=True)
+    forgot_password_verification_code = Column(GUID(), nullable=True)
+    forgot_password_verification_code_expiry_time = Column(DateTime(timezone=True), nullable=True)
 
     roles = relationship(
         "UserRole",

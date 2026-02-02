@@ -67,6 +67,8 @@ class ApplicationSeeder:
             email="sa@example.com",
             full_name="Super Admin",
             password=get_password_hash("123456"),
+            is_active=True,
+            email_confirmed=True,
         )
 
         # Fetch the Super Admin role
@@ -91,7 +93,6 @@ class ApplicationSeeder:
         else:
             existing_user.full_name = user.full_name
             existing_user.password = user.password
-            session.add(existing_user)
             await session.commit()
             print("User updated successfully.")
 

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from app.core.config import settings
 from app.repositories.interfaces.user_repository_interface import IUserRepository
 from app.services.interfaces import IAuthService, ITokenService, ICacheService
 from app.utils.auth_utils import verify_password
@@ -33,6 +34,18 @@ class AuthService(IAuthService):
         if not verify_password(password, user.password):
             raise UnauthorizedException(
                 message="Incorrect username or password!",
+            )
+        
+        # Check if email confirmation is required and user's email is confirmed
+        if settings.REQUIRE_EMAIL_CONFIRMED_ACCOUNT and not user.email_confirmed:
+            raise UnauthorizedException(
+                message="Email not confirmed. Please verify your email address before logging in.",
+            )
+        
+        # Check if user account is active
+        if not user.is_active:
+            raise UnauthorizedException(
+                message="Your account has been deactivated. Please contact support.",
             )
 
         # Generate tokens

@@ -1,10 +1,12 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import uuid
 
 from app.core.config import settings
 from app.repositories.interfaces.user_repository_interface import IUserRepository
-from app.services.interfaces import IAuthService, ITokenService, ICacheService
-from app.utils.auth_utils import verify_password
-from app.utils.exception_utils import NotFoundException, UnauthorizedException
+from app.schema.response.meta import ResponseMeta
+from app.services.interfaces import IAuthService, ITokenService, ICacheService, IEmailService
+from app.utils.auth_utils import get_password_hash, verify_password
+from app.utils.exception_utils import NotFoundException, UnauthorizedException, BadRequestException
 from app.schema.response.auth import AuthResponse
 from app.schema.response.user import UserResponse
 
@@ -15,11 +17,13 @@ class AuthService(IAuthService):
         self,
         user_repository: IUserRepository,
         token_service: ITokenService,
-        cache_service: ICacheService
+        cache_service: ICacheService,
+        email_service: IEmailService
     ):
         self.user_repository = user_repository
         self.token_service = token_service
         self.cache_service = cache_service
+        self.email_service = email_service
 
     async def login(self, email: str, password: str) -> AuthResponse:
         # Verify user exists
@@ -114,3 +118,93 @@ class AuthService(IAuthService):
                 full_name=user.full_name,
             ),
         )
+
+    async def forgot_password(self, email: str) -> ResponseMeta:
+        """Send password reset verification code to user's email."""
+        # Verify user exists
+        user = await self.user_repository.get_by_email(email)
+        if not user:
+            raise NotFoundException(
+                key="email",
+                message=f"User not found with this email: {email}",
+            )
+        
+        # Check if user account is active
+        if not user.is_active:
+            raise BadRequestException(
+                message="Your account has been deactivated. Please contact support.",
+            )
+        
+        # Generate verification code (UUID)
+        verification_code = uuid.uuid4()
+        
+        # Set expiry time from settings
+        expiry_time = datetime.now(timezone.utc) + timedelta(minutes=settings.FORGOT_PASSWORD_VERIFICATION_CODE_EXPIRE_MINUTES)
+        
+        # Update user with verification code
+        user.forgot_password_verification_code = verification_code
+        user.forgot_password_verification_code_expiry_time = expiry_time
+        await self.user_repository.update(user)
+        
+        # Generate password reset link
+        reset_link = f"{settings.FRONTEND_URL}/reset-password?code={verification_code}&email={user.email}"
+        
+        # Send email with reset link
+        await self.email_service.send_email(
+            to_email=user.email,
+            subject="Password Reset Request",
+            body=f"""
+            <h2>Password Reset Request</h2>
+            <p>Hello {user.full_name},</p>
+            <p>You have requested to reset your password. Please click the link below to reset your password:</p>
+            <p><a href="{reset_link}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
+            <p>Or copy and paste this link into your browser:</p>
+            <p>{reset_link}</p>
+            <p>This link will expire in {settings.FORGOT_PASSWORD_VERIFICATION_CODE_EXPIRE_MINUTES} minutes.</p>
+            <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+            """
+        )
+        
+        return ResponseMeta(message="Password reset verification code sent to your email")
+
+    async def reset_password(self, email: str, verification_code: str, new_password: str) -> ResponseMeta:
+        """Reset user password using verification code."""
+        # Verify user exists
+        user = await self.user_repository.get_by_email(email)
+        if not user:
+            raise NotFoundException(
+                key="email",
+                message=f"User not found with this email: {email}",
+            )
+        
+        # Check if verification code exists
+        if not user.forgot_password_verification_code:
+            raise BadRequestException(
+                message="No password reset request found. Please request a new verification code.",
+            )
+        
+        # Verify the code matches
+        if str(user.forgot_password_verification_code) != verification_code:
+            raise BadRequestException(
+                message="Invalid verification code!",
+            )
+        
+        # Check if verification code is expired
+        if user.forgot_password_verification_code_expiry_time < datetime.now(timezone.utc):
+            raise BadRequestException(
+                message="Verification code has expired. Please request a new one.",
+            )
+        
+        # Hash new password
+        hashed_password = get_password_hash(new_password)
+        
+        # Update user password and clear verification code
+        user.password = hashed_password
+        user.forgot_password_verification_code = None
+        user.forgot_password_verification_code_expiry_time = None
+        # Invalidate existing refresh token for security
+        user.refresh_token = None
+        user.refresh_token_expiry_time = None
+        await self.user_repository.update(user)
+        
+        return ResponseMeta(message="Password has been reset successfully. Please login with your new password.")

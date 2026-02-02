@@ -84,16 +84,17 @@ class Container(containers.DeclarativeContainer):
         cache_service=cache_service
     )
 
+    email_service = providers.Factory(
+        EmailService,
+        db=db_session
+    )
+
     auth_service = providers.Factory(
         AuthService,
         user_repository=user_repository,
         token_service=token_service,
-        cache_service=cache_service
-    )
-
-    email_service = providers.Factory(
-        EmailService,
-        db=db_session
+        cache_service=cache_service,
+        email_service=email_service
     )
 
     document_storage_service = providers.Singleton(

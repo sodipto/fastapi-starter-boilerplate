@@ -17,11 +17,6 @@ router = APIRouter(
 )
 
 
-@router.get("/me", summary="Get current user", response_model=dict)
-def get_me(user_id: int = Depends(get_current_user)):
-    return {"username": "sodipto", "email": "sodipto.saha@asthait.com","id": user_id}
-
-
 @router.get("/{user_id}", summary="Get user by Id", response_model=UserResponse)
 @inject
 async def get_by_id(user_id: uuid.UUID, user_service: IUserService = Depends(Provide[Container.user_service])):

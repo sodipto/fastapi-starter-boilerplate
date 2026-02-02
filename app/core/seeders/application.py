@@ -1,5 +1,7 @@
 from app.core.database.session import async_session
+from app.core.rbac import AppPermissions, PermissionClaimType
 from app.models.role import Role
+from app.models.role_claim import RoleClaim
 from app.models.user import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -18,6 +20,30 @@ class ApplicationSeeder:
         async with async_session() as session:
             for seeder in self.seeders:
                 await seeder(session)
+
+    async def assign_permissions_to_role(
+        self, 
+        session: AsyncSession, 
+        role: Role, 
+        permissions: list
+    ):
+        """Assign a list of permissions to a role."""
+        # Get existing claims for this role
+        stmt = select(RoleClaim).where(RoleClaim.role_id == role.id)
+        result = await session.execute(stmt)
+        existing_claims = {claim.claim_name for claim in result.scalars().all()}
+        
+        # Add new permissions that don't exist
+        for perm in permissions:
+            if perm.name not in existing_claims:
+                claim = RoleClaim(
+                    role_id=role.id,
+                    claim_type=PermissionClaimType.PERMISSION.value,
+                    claim_name=perm.name
+                )
+                session.add(claim)
+        
+        await session.flush()
 
     async def seed_admin_user(self, session: AsyncSession):
         user = User(
@@ -66,12 +92,29 @@ class ApplicationSeeder:
 
         if not existing_role:
             session.add(role)
+            await session.flush()  # Get the role ID
+            
+            # Assign all permissions to Super Admin
+            await self.assign_permissions_to_role(
+                session, 
+                role, 
+                AppPermissions.super_admin()
+            )
+            
             await session.commit()
-            print("Super Admin role seeded successfully.")
+            print("Super Admin role seeded with all permissions.")
         else:
             existing_role.name = role.name
             existing_role.description = role.description
             existing_role.is_system = role.is_system
             session.add(existing_role)
+            
+            # Ensure all permissions are assigned
+            await self.assign_permissions_to_role(
+                session, 
+                existing_role, 
+                AppPermissions.super_admin()
+            )
+            
             await session.commit()
-            print("Super Admin role updated successfully.")
+            print("Super Admin role updated with all permissions.")

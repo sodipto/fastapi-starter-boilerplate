@@ -159,3 +159,19 @@ class AppPermissions:
     def by_resource(cls, resource: AppResource) -> list[APIPermission]:
         """Get all permissions for a specific resource."""
         return [p for p in cls.all() if p.resource == resource]
+
+    # =========================================================================
+    # ROLE-BASED PERMISSION SETS
+    # =========================================================================
+    @classmethod
+    def super_admin(cls) -> list[APIPermission]:
+        """Get all permissions for Super Admin role."""
+        return cls.all()
+    
+    @classmethod
+    def basic_user(cls) -> list[APIPermission]:
+        """Get basic permissions for regular users."""
+        return [
+            cls.USERS_VIEW,
+            cls.DOCUMENTS_VIEW,
+        ]

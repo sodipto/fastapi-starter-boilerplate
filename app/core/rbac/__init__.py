@@ -30,6 +30,7 @@ from app.core.rbac.resources import AppResource
 from app.core.rbac.claims import AppClaim, PermissionClaimType
 from app.core.rbac.api_permission import APIPermission
 from app.core.rbac.app_permissions import AppPermissions
+from app.core.rbac.app_roles import AppRoles, ApplicationSystemRole
 from app.core.rbac.groups import PermissionGroups
 from app.core.rbac.dependencies import (
     PermissionChecker,
@@ -50,6 +51,9 @@ __all__ = [
     "AppPermissions",
     "PermissionClaimType",
     "PermissionGroups",
+    # Role classes
+    "AppRoles",
+    "ApplicationSystemRole",
     # Dependencies
     "PermissionChecker",
     "require_permission",

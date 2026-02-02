@@ -169,9 +169,23 @@ class AppPermissions:
         return cls.all()
     
     @classmethod
-    def basic_user(cls) -> list[APIPermission]:
-        """Get basic permissions for regular users."""
+    def admin(cls) -> list[APIPermission]:
+        """Get permissions for Admin role."""
         return [
+            # Users - full access
+            cls.USERS_SEARCH,
             cls.USERS_VIEW,
+            cls.USERS_CREATE,
+            cls.USERS_UPDATE,
+            cls.USERS_DELETE,
+            # Roles - view only
+            cls.ROLES_SEARCH,
+            cls.ROLES_VIEW,
+            cls.ROLES_CREATE,
+            cls.ROLES_UPDATE,
+            # Documents - full access
             cls.DOCUMENTS_VIEW,
+            cls.DOCUMENTS_UPLOAD,
+            cls.DOCUMENTS_UPDATE,
+            cls.DOCUMENTS_DELETE,
         ]

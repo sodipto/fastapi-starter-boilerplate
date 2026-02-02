@@ -3,11 +3,17 @@ import uuid
 
 from app.schema.request.identity.role import RoleRequest
 from app.schema.response.role import RoleResponse
+from app.schema.response.permission import PermissionResponse
 from app.schema.response.pagination import PagedData
 
 
 class IRoleService(ABC):
     """Interface for role service operations."""
+
+    @abstractmethod
+    def get_all_permissions(self) -> list[PermissionResponse]:
+        """Get all available permissions in the system."""
+        pass
 
     @abstractmethod
     async def create(self, role_request: RoleRequest) -> RoleResponse:

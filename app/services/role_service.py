@@ -1,10 +1,13 @@
 import uuid
+from collections import defaultdict
 
 from app.core.constants.pagination import calculate_skip
+from app.core.rbac import AppPermissions
 from app.models.role import Role
 from app.repositories.interfaces.role_repository_interface import IRoleRepository
 from app.schema.request.identity.role import RoleRequest
 from app.schema.response.role import RoleResponse
+from app.schema.response.permission import PermissionResponse, PermissionClaimResponse
 from app.schema.response.pagination import PagedData, create_paged_response
 from app.services.interfaces.role_service_interface import IRoleService
 from app.utils.exception_utils import NotFoundException, ForbiddenException, ConflictException
@@ -13,6 +16,27 @@ from app.utils.exception_utils import NotFoundException, ForbiddenException, Con
 class RoleService(IRoleService):
     def __init__(self, role_repository: IRoleRepository):
         self.role_repository = role_repository
+
+    def get_all_permissions(self) -> list[PermissionResponse]:
+        """Get all available permissions in the system, grouped by resource."""
+        permissions = AppPermissions.visible()
+        
+        # Group permissions by display_name (resource)
+        grouped: dict[str, list[PermissionClaimResponse]] = defaultdict(list)
+        
+        for perm in permissions:
+            claim = PermissionClaimResponse(
+                action=perm.action.value.capitalize(),
+                description=perm.description,
+                permission=f"Permission.{perm.display_name}.{perm.action.value.capitalize()}"
+            )
+            grouped[perm.display_name].append(claim)
+        
+        # Convert to list of PermissionResponse
+        return [
+            PermissionResponse(name=name, claims=claims)
+            for name, claims in grouped.items()
+        ]
 
     async def create(self, role_request: RoleRequest) -> RoleResponse:
         """Create a new role."""

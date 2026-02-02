@@ -5,7 +5,11 @@ This module provides a complete permission-based authorization system
 for FastAPI applications.
 
 Components:
-    - Permission: Enum class defining all available permissions
+    - AppAction: Enum of all available actions (View, Search, Create, etc.)
+    - AppResource: Enum of all available resources (Users, Roles, etc.)
+    - AppClaim: Claim type constants
+    - APIPermission: Permission record combining action + resource with metadata
+    - AppPermissions: Central registry of all permissions
     - PermissionClaimType: Enum for claim type values
     - PermissionGroups: Predefined permission groups
     - require_permission: Dependency for single permission check
@@ -14,14 +18,19 @@ Components:
     - get_current_user_with_permissions: Get user with loaded permissions
 
 Usage:
-    from app.core.rbac import Permission, require_permission
+    from app.core.rbac import AppPermissions, require_permission
     
-    @router.get("/users", dependencies=[Depends(require_permission(Permission.USERS_VIEW))])
+    @router.get("/users", dependencies=[Depends(require_permission(AppPermissions.USERS_VIEW))])
     async def list_users():
         ...
 """
 
-from app.core.rbac.permissions import Permission, PermissionClaimType, PermissionGroups
+from app.core.rbac.actions import AppAction
+from app.core.rbac.resources import AppResource
+from app.core.rbac.claims import AppClaim, PermissionClaimType
+from app.core.rbac.api_permission import APIPermission
+from app.core.rbac.app_permissions import AppPermissions
+from app.core.rbac.groups import PermissionGroups
 from app.core.rbac.dependencies import (
     PermissionChecker,
     require_permission,
@@ -33,8 +42,12 @@ from app.core.rbac.dependencies import (
 )
 
 __all__ = [
-    # Permission enums and groups
-    "Permission",
+    # Permission classes
+    "AppAction",
+    "AppResource",
+    "AppClaim",
+    "APIPermission",
+    "AppPermissions",
     "PermissionClaimType",
     "PermissionGroups",
     # Dependencies

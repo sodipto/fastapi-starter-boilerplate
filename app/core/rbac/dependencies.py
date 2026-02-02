@@ -13,31 +13,33 @@ Features:
 - Performance-optimized with caching
 
 Usage Examples:
-    from app.core.rbac import Permission, require_permission
+    from app.core.rbac import AppPermissions, require_permission
     
     # Single permission
-    @router.get("/users", dependencies=[Depends(require_permission(Permission.USERS_VIEW))])
+    @router.get("/users", dependencies=[Depends(require_permission(AppPermissions.USERS_VIEW))])
     
     # Multiple permissions (OR - any one is sufficient)
     @router.get("/reports", dependencies=[Depends(require_any_permission(
-        Permission.REPORTS_VIEW, Permission.ADMIN_ACCESS
+        AppPermissions.REPORTS_VIEW, AppPermissions.ADMIN_ACCESS
     ))])
     
     # Multiple permissions (AND - all required)
     @router.delete("/users/{id}", dependencies=[Depends(require_all_permissions(
-        Permission.USERS_DELETE, Permission.AUDIT_VIEW
+        AppPermissions.USERS_DELETE, AppPermissions.AUDIT_VIEW
     ))])
 """
 
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 from uuid import UUID
 from fastapi import Depends, HTTPException, status
 
 from app.core.identity import get_current_user
-from app.core.rbac.permissions import Permission
-from app.core.container import Container
+from app.core.rbac.api_permission import APIPermission
 from app.services.interfaces.permission_service_interface import IPermissionService
 from dependency_injector.wiring import inject, Provide
+
+if TYPE_CHECKING:
+    from app.core.container import Container
 
 
 class PermissionChecker:
@@ -48,25 +50,25 @@ class PermissionChecker:
     used as a callable dependency in route definitions.
     
     Attributes:
-        required_permissions: List of permission strings to check
+        required_permissions: List of permission name strings to check
         require_all: If True, all permissions are required (AND logic)
                     If False, any permission is sufficient (OR logic)
     """
 
     def __init__(
         self,
-        permissions: list[Permission],
+        permissions: list[APIPermission],
         require_all: bool = False
     ):
         """
         Initialize the permission checker.
         
         Args:
-            permissions: List of Permission enum values to check
+            permissions: List of APIPermission instances to check
             require_all: Whether all permissions are required (default: False)
         """
-        # Convert Permission enums to string values
-        self.required_permissions = [p.value for p in permissions]
+        # Convert APIPermission to permission name strings
+        self.required_permissions = [p.name for p in permissions]
         self.require_all = require_all
 
     @inject
@@ -74,7 +76,7 @@ class PermissionChecker:
         self,
         user_id: UUID = Depends(get_current_user),
         permission_service: IPermissionService = Depends(
-            Provide[Container.permission_service]
+            Provide["permission_service"]
         )
     ) -> UUID:
         """
@@ -133,14 +135,14 @@ class PermissionChecker:
         return user_id
 
 
-def require_permission(permission: Permission) -> PermissionChecker:
+def require_permission(permission: APIPermission) -> PermissionChecker:
     """
     Create a dependency that requires a SINGLE permission.
     
     This is the most common use case for permission checking.
     
     Args:
-        permission: The Permission enum value required
+        permission: The APIPermission instance required
         
     Returns:
         PermissionChecker instance configured for single permission
@@ -148,7 +150,7 @@ def require_permission(permission: Permission) -> PermissionChecker:
     Example:
         @router.get(
             "/users",
-            dependencies=[Depends(require_permission(Permission.USERS_VIEW))]
+            dependencies=[Depends(require_permission(AppPermissions.USERS_VIEW))]
         )
         async def list_users():
             ...
@@ -156,7 +158,7 @@ def require_permission(permission: Permission) -> PermissionChecker:
     return PermissionChecker(permissions=[permission], require_all=False)
 
 
-def require_any_permission(*permissions: Permission) -> PermissionChecker:
+def require_any_permission(*permissions: APIPermission) -> PermissionChecker:
     """
     Create a dependency that requires ANY ONE of the specified permissions.
     
@@ -164,7 +166,7 @@ def require_any_permission(*permissions: Permission) -> PermissionChecker:
     Useful for endpoints accessible to multiple roles.
     
     Args:
-        *permissions: Variable number of Permission enum values
+        *permissions: Variable number of APIPermission instances
         
     Returns:
         PermissionChecker instance configured for OR logic
@@ -173,8 +175,8 @@ def require_any_permission(*permissions: Permission) -> PermissionChecker:
         @router.get(
             "/dashboard",
             dependencies=[Depends(require_any_permission(
-                Permission.ADMIN_ACCESS,
-                Permission.REPORTS_VIEW
+                AppPermissions.ADMIN_ACCESS,
+                AppPermissions.REPORTS_VIEW
             ))]
         )
         async def view_dashboard():
@@ -183,7 +185,7 @@ def require_any_permission(*permissions: Permission) -> PermissionChecker:
     return PermissionChecker(permissions=list(permissions), require_all=False)
 
 
-def require_all_permissions(*permissions: Permission) -> PermissionChecker:
+def require_all_permissions(*permissions: APIPermission) -> PermissionChecker:
     """
     Create a dependency that requires ALL of the specified permissions.
     
@@ -191,7 +193,7 @@ def require_all_permissions(*permissions: Permission) -> PermissionChecker:
     Useful for highly sensitive operations requiring multiple authorizations.
     
     Args:
-        *permissions: Variable number of Permission enum values
+        *permissions: Variable number of APIPermission instances
         
     Returns:
         PermissionChecker instance configured for AND logic
@@ -200,8 +202,8 @@ def require_all_permissions(*permissions: Permission) -> PermissionChecker:
         @router.delete(
             "/users/{user_id}",
             dependencies=[Depends(require_all_permissions(
-                Permission.USERS_DELETE,
-                Permission.ADMIN_ACCESS
+                AppPermissions.USERS_DELETE,
+                AppPermissions.ADMIN_ACCESS
             ))]
         )
         async def delete_user(user_id: UUID):
@@ -214,7 +216,7 @@ def require_all_permissions(*permissions: Permission) -> PermissionChecker:
 # ALTERNATIVE: Functional Approach (for those who prefer closures)
 # =============================================================================
 
-def create_permission_dependency(permission: Permission) -> Callable:
+def create_permission_dependency(permission: APIPermission) -> Callable:
     """
     Alternative functional approach using closures.
     
@@ -222,7 +224,7 @@ def create_permission_dependency(permission: Permission) -> Callable:
     but using a closure-based approach instead of a class.
     
     Args:
-        permission: The Permission enum value required
+        permission: The APIPermission instance required
         
     Returns:
         Async dependency function
@@ -230,25 +232,25 @@ def create_permission_dependency(permission: Permission) -> Callable:
     Example:
         @router.get(
             "/users",
-            dependencies=[Depends(create_permission_dependency(Permission.USERS_VIEW))]
+            dependencies=[Depends(create_permission_dependency(AppPermissions.USERS_VIEW))]
         )
     """
     @inject
     async def permission_dependency(
         user_id: UUID = Depends(get_current_user),
         permission_service: IPermissionService = Depends(
-            Provide[Container.permission_service]
+            Provide["permission_service"]
         )
     ) -> UUID:
         has_perm = await permission_service.has_permission(
             user_id, 
-            permission.value
+            permission.name
         )
         
         if not has_perm:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission denied. Required: {permission.value}"
+                detail=f"Permission denied. Required: {permission.name}"
             )
         
         return user_id
@@ -272,21 +274,21 @@ class CurrentUserWithPermissions:
         self.user_id = user_id
         self.permissions = permissions
     
-    def has_permission(self, permission: Permission) -> bool:
+    def has_permission(self, permission: APIPermission) -> bool:
         """Check if user has a specific permission."""
-        return permission.value in self.permissions
+        return permission.name in self.permissions
     
-    def has_any(self, *permissions: Permission) -> bool:
+    def has_any(self, *permissions: APIPermission) -> bool:
         """Check if user has any of the specified permissions."""
-        perm_values = {p.value for p in permissions}
-        return bool(self.permissions & perm_values)
+        perm_names = {p.name for p in permissions}
+        return bool(self.permissions & perm_names)
 
 
 @inject
 async def get_current_user_with_permissions(
     user_id: UUID = Depends(get_current_user),
     permission_service: IPermissionService = Depends(
-        Provide[Container.permission_service]
+        Provide["permission_service"]
     )
 ) -> CurrentUserWithPermissions:
     """
@@ -306,7 +308,7 @@ async def get_current_user_with_permissions(
             item = await get_item_by_id(item_id)
             
             # Show edit button only if user has permission
-            item.can_edit = current_user.has_permission(Permission.ITEMS_UPDATE)
+            item.can_edit = current_user.has_permission(AppPermissions.ITEMS_UPDATE)
             
             return item
     """

@@ -1,7 +1,7 @@
 """
-API Permission Definition
+Permission Definition
 
-Defines the APIPermission dataclass that combines action and resource with metadata.
+Defines the PermissionDefinition dataclass that combines action and resource with metadata.
 """
 
 from dataclasses import dataclass
@@ -12,7 +12,7 @@ from app.core.rbac.claims import AppClaim
 
 
 @dataclass(frozen=True)
-class APIPermission:
+class PermissionDefinition:
     """
     A permission record combining action and resource with metadata.
     

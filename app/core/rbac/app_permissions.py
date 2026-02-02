@@ -6,7 +6,7 @@ Central registry of all permissions in the application.
 
 from app.core.rbac.actions import AppAction
 from app.core.rbac.resources import AppResource
-from app.core.rbac.api_permission import APIPermission
+from app.core.rbac.permission_definition import PermissionDefinition
 
 
 class AppPermissions:
@@ -27,31 +27,31 @@ class AppPermissions:
     # =========================================================================
     # USER MANAGEMENT PERMISSIONS
     # =========================================================================
-    USERS_SEARCH = APIPermission(
+    USERS_SEARCH = PermissionDefinition(
         description="Search users",
         display_name="Users",
         action=AppAction.SEARCH,
         resource=AppResource.USERS,
     )
-    USERS_VIEW = APIPermission(
+    USERS_VIEW = PermissionDefinition(
         description="View user details",
         display_name="Users",
         action=AppAction.VIEW,
         resource=AppResource.USERS,
     )
-    USERS_CREATE = APIPermission(
+    USERS_CREATE = PermissionDefinition(
         description="Create new users",
         display_name="Users",
         action=AppAction.CREATE,
         resource=AppResource.USERS,
     )
-    USERS_UPDATE = APIPermission(
+    USERS_UPDATE = PermissionDefinition(
         description="Update existing users",
         display_name="Users",
         action=AppAction.UPDATE,
         resource=AppResource.USERS,
     )
-    USERS_DELETE = APIPermission(
+    USERS_DELETE = PermissionDefinition(
         description="Delete users",
         display_name="Users",
         action=AppAction.DELETE,
@@ -61,31 +61,31 @@ class AppPermissions:
     # =========================================================================
     # ROLE MANAGEMENT PERMISSIONS
     # =========================================================================
-    ROLES_SEARCH = APIPermission(
+    ROLES_SEARCH = PermissionDefinition(
         description="Search roles",
         display_name="Roles",
         action=AppAction.SEARCH,
         resource=AppResource.ROLES
     )
-    ROLES_VIEW = APIPermission(
+    ROLES_VIEW = PermissionDefinition(
         description="View role details",
         display_name="Roles",
         action=AppAction.VIEW,
         resource=AppResource.ROLES
     )
-    ROLES_CREATE = APIPermission(
+    ROLES_CREATE = PermissionDefinition(
         description="Create new roles",
         display_name="Roles",
         action=AppAction.CREATE,
         resource=AppResource.ROLES
     )
-    ROLES_UPDATE = APIPermission(
+    ROLES_UPDATE = PermissionDefinition(
         description="Update roles and permissions",
         display_name="Roles",
         action=AppAction.UPDATE,
         resource=AppResource.ROLES
     )
-    ROLES_DELETE = APIPermission(
+    ROLES_DELETE = PermissionDefinition(
         description="Delete roles",
         display_name="Roles",
         action=AppAction.DELETE,
@@ -95,25 +95,25 @@ class AppPermissions:
     # =========================================================================
     # DOCUMENT PERMISSIONS
     # =========================================================================
-    DOCUMENTS_VIEW = APIPermission(
+    DOCUMENTS_VIEW = PermissionDefinition(
         description="View documents",
         display_name="Documents",
         action=AppAction.VIEW,
         resource=AppResource.DOCUMENTS
     )
-    DOCUMENTS_UPLOAD = APIPermission(
+    DOCUMENTS_UPLOAD = PermissionDefinition(
         description="Upload documents",
         display_name="Documents",
         action=AppAction.UPLOAD,
         resource=AppResource.DOCUMENTS
     )
-    DOCUMENTS_UPDATE = APIPermission(
+    DOCUMENTS_UPDATE = PermissionDefinition(
         description="Update document metadata",
         display_name="Documents",
         action=AppAction.UPDATE,
         resource=AppResource.DOCUMENTS
     )
-    DOCUMENTS_DELETE = APIPermission(
+    DOCUMENTS_DELETE = PermissionDefinition(
         description="Delete documents",
         display_name="Documents",
         action=AppAction.DELETE,
@@ -123,10 +123,10 @@ class AppPermissions:
     # =========================================================================
     # PERMISSION REGISTRY
     # =========================================================================
-    _all_permissions: list[APIPermission] = None
+    _all_permissions: list[PermissionDefinition] = None
     
     @classmethod
-    def all(cls) -> list[APIPermission]:
+    def all(cls) -> list[PermissionDefinition]:
         """Get all permissions in the application."""
         if cls._all_permissions is None:
             cls._all_permissions = [
@@ -151,12 +151,12 @@ class AppPermissions:
         return cls._all_permissions
     
     @classmethod
-    def visible(cls) -> list[APIPermission]:
+    def visible(cls) -> list[PermissionDefinition]:
         """Get only visible permissions (is_show=True)."""
         return [p for p in cls.all() if p.is_show]
     
     @classmethod
-    def by_resource(cls, resource: AppResource) -> list[APIPermission]:
+    def by_resource(cls, resource: AppResource) -> list[PermissionDefinition]:
         """Get all permissions for a specific resource."""
         return [p for p in cls.all() if p.resource == resource]
 
@@ -164,12 +164,12 @@ class AppPermissions:
     # ROLE-BASED PERMISSION SETS
     # =========================================================================
     @classmethod
-    def super_admin(cls) -> list[APIPermission]:
+    def super_admin(cls) -> list[PermissionDefinition]:
         """Get all permissions for Super Admin role."""
         return cls.all()
     
     @classmethod
-    def admin(cls) -> list[APIPermission]:
+    def admin(cls) -> list[PermissionDefinition]:
         """Get permissions for Admin role."""
         return [
             # Users - full access

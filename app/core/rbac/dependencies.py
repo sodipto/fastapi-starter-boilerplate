@@ -34,7 +34,7 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 
 from app.core.identity import get_current_user
-from app.core.rbac.api_permission import APIPermission
+from app.core.rbac.permission_definition import PermissionDefinition
 from app.services.interfaces.permission_service_interface import IPermissionService
 from dependency_injector.wiring import inject, Provide
 
@@ -57,17 +57,17 @@ class PermissionChecker:
 
     def __init__(
         self,
-        permissions: list[APIPermission],
+        permissions: list[PermissionDefinition],
         require_all: bool = False
     ):
         """
         Initialize the permission checker.
         
         Args:
-            permissions: List of APIPermission instances to check
+            permissions: List of PermissionDefinition instances to check
             require_all: Whether all permissions are required (default: False)
         """
-        # Convert APIPermission to permission name strings
+        # Convert PermissionDefinition to permission name strings
         self.required_permissions = [p.name for p in permissions]
         self.require_all = require_all
 
@@ -135,14 +135,14 @@ class PermissionChecker:
         return user_id
 
 
-def require_permission(permission: APIPermission) -> PermissionChecker:
+def require_permission(permission: PermissionDefinition) -> PermissionChecker:
     """
     Create a dependency that requires a SINGLE permission.
     
     This is the most common use case for permission checking.
     
     Args:
-        permission: The APIPermission instance required
+        permission: The PermissionDefinition instance required
         
     Returns:
         PermissionChecker instance configured for single permission
@@ -158,7 +158,7 @@ def require_permission(permission: APIPermission) -> PermissionChecker:
     return PermissionChecker(permissions=[permission], require_all=False)
 
 
-def require_any_permission(*permissions: APIPermission) -> PermissionChecker:
+def require_any_permission(*permissions: PermissionDefinition) -> PermissionChecker:
     """
     Create a dependency that requires ANY ONE of the specified permissions.
     
@@ -166,7 +166,7 @@ def require_any_permission(*permissions: APIPermission) -> PermissionChecker:
     Useful for endpoints accessible to multiple roles.
     
     Args:
-        *permissions: Variable number of APIPermission instances
+        *permissions: Variable number of PermissionDefinition instances
         
     Returns:
         PermissionChecker instance configured for OR logic
@@ -185,7 +185,7 @@ def require_any_permission(*permissions: APIPermission) -> PermissionChecker:
     return PermissionChecker(permissions=list(permissions), require_all=False)
 
 
-def require_all_permissions(*permissions: APIPermission) -> PermissionChecker:
+def require_all_permissions(*permissions: PermissionDefinition) -> PermissionChecker:
     """
     Create a dependency that requires ALL of the specified permissions.
     
@@ -193,7 +193,7 @@ def require_all_permissions(*permissions: APIPermission) -> PermissionChecker:
     Useful for highly sensitive operations requiring multiple authorizations.
     
     Args:
-        *permissions: Variable number of APIPermission instances
+        *permissions: Variable number of PermissionDefinition instances
         
     Returns:
         PermissionChecker instance configured for AND logic
@@ -216,7 +216,7 @@ def require_all_permissions(*permissions: APIPermission) -> PermissionChecker:
 # ALTERNATIVE: Functional Approach (for those who prefer closures)
 # =============================================================================
 
-def create_permission_dependency(permission: APIPermission) -> Callable:
+def create_permission_dependency(permission: PermissionDefinition) -> Callable:
     """
     Alternative functional approach using closures.
     
@@ -224,7 +224,7 @@ def create_permission_dependency(permission: APIPermission) -> Callable:
     but using a closure-based approach instead of a class.
     
     Args:
-        permission: The APIPermission instance required
+        permission: The PermissionDefinition instance required
         
     Returns:
         Async dependency function
@@ -274,11 +274,11 @@ class CurrentUserWithPermissions:
         self.user_id = user_id
         self.permissions = permissions
     
-    def has_permission(self, permission: APIPermission) -> bool:
+    def has_permission(self, permission: PermissionDefinition) -> bool:
         """Check if user has a specific permission."""
         return permission.name in self.permissions
     
-    def has_any(self, *permissions: APIPermission) -> bool:
+    def has_any(self, *permissions: PermissionDefinition) -> bool:
         """Check if user has any of the specified permissions."""
         perm_names = {p.name for p in permissions}
         return bool(self.permissions & perm_names)

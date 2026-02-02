@@ -8,7 +8,7 @@ Components:
     - AppAction: Enum of all available actions (View, Search, Create, etc.)
     - AppResource: Enum of all available resources (Users, Roles, etc.)
     - AppClaim: Claim type constants
-    - APIPermission: Permission record combining action + resource with metadata
+    - PermissionDefinition: Permission record combining action + resource with metadata
     - AppPermissions: Central registry of all permissions
     - PermissionClaimType: Enum for claim type values
     - PermissionGroups: Predefined permission groups
@@ -28,7 +28,7 @@ Usage:
 from app.core.rbac.actions import AppAction
 from app.core.rbac.resources import AppResource
 from app.core.rbac.claims import AppClaim, PermissionClaimType
-from app.core.rbac.api_permission import APIPermission
+from app.core.rbac.permission_definition import PermissionDefinition
 from app.core.rbac.app_permissions import AppPermissions
 from app.core.rbac.app_roles import AppRoles, ApplicationSystemRole
 from app.core.rbac.groups import PermissionGroups
@@ -47,7 +47,7 @@ __all__ = [
     "AppAction",
     "AppResource",
     "AppClaim",
-    "APIPermission",
+    "PermissionDefinition",
     "AppPermissions",
     "PermissionClaimType",
     "PermissionGroups",

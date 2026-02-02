@@ -16,7 +16,7 @@ from app.core.jwt_security import JWTBearer
 from app.core.constants.pagination import PAGE, PAGE_SIZE
 from app.core.rbac import AppPermissions, require_permission
 from app.schema.request.identity.role import RoleRequest
-from app.schema.response.role import RoleResponse
+from app.schema.response.role import RoleResponse, RoleSearchResponse
 from app.schema.response.permission import PermissionResponse
 from app.schema.response.pagination import PagedData
 from app.services.interfaces.role_service_interface import IRoleService
@@ -43,10 +43,6 @@ async def get_all_permissions(
 ):
     """
     Get all available permissions in the system.
-    
-    Args:
-        visible_only: If True, return only permissions with is_show=True (default).
-                     If False, return all permissions including hidden ones.
     
     Returns a list of all permissions with their metadata.
     Useful for building role permission assignment UI.
@@ -86,7 +82,7 @@ async def create(
 @router.get(
     "/search",
     summary="Search roles with pagination",
-    response_model=PagedData[RoleResponse],
+    response_model=PagedData[RoleSearchResponse],
     dependencies=[Depends(require_permission(AppPermissions.ROLES_SEARCH))]
 )
 @inject
@@ -110,14 +106,14 @@ async def search(
 # VIEW - Requires ROLES_VIEW permission
 # =============================================================================
 @router.get(
-    "/{role_id}",
+    "/{id}",
     summary="Get role by id",
     response_model=RoleResponse,
     dependencies=[Depends(require_permission(AppPermissions.ROLES_VIEW))]
 )
 @inject
 async def get(
-    role_id: uuid.UUID,
+    id: uuid.UUID,
     role_service: IRoleService = Depends(Provide[Container.role_service])
 ):
     """
@@ -126,21 +122,21 @@ async def get(
     Permission Required:
         - permission.roles.view
     """
-    return await role_service.get_by_id(role_id)
+    return await role_service.get_by_id(id)
 
 
 # =============================================================================
 # UPDATE - Requires ROLES_UPDATE permission
 # =============================================================================
 @router.put(
-    "/{role_id}",
+    "/{id}",
     summary="Update role",
     response_model=RoleResponse,
     dependencies=[Depends(require_permission(AppPermissions.ROLES_UPDATE))]
 )
 @inject
 async def update(
-    role_id: uuid.UUID,
+    id: uuid.UUID,
     role_request: RoleRequest,
     role_service: IRoleService = Depends(Provide[Container.role_service])
 ):
@@ -150,21 +146,21 @@ async def update(
     Permission Required:
         - permission.roles.update
     """
-    return await role_service.update(role_id, role_request)
+    return await role_service.update(id, role_request)
 
 
 # =============================================================================
 # DELETE - Requires ROLES_DELETE permission
 # =============================================================================
 @router.delete(
-    "/{role_id}",
+    "/{id}",
     summary="Delete role",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_permission(AppPermissions.ROLES_DELETE))]
 )
 @inject
 async def delete(
-    role_id: uuid.UUID,
+    id: uuid.UUID,
     role_service: IRoleService = Depends(Provide[Container.role_service])
 ):
     """
@@ -173,4 +169,4 @@ async def delete(
     Permission Required:
         - permission.roles.delete
     """
-    await role_service.delete(role_id)
+    await role_service.delete(id)

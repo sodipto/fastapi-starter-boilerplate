@@ -2,11 +2,12 @@ import uuid
 from collections import defaultdict
 
 from app.core.constants.pagination import calculate_skip
-from app.core.rbac import AppPermissions
+from app.core.rbac import AppPermissions, PermissionClaimType
 from app.models.role import Role
+from app.models.role_claim import RoleClaim
 from app.repositories.interfaces.role_repository_interface import IRoleRepository
 from app.schema.request.identity.role import RoleRequest
-from app.schema.response.role import RoleResponse
+from app.schema.response.role import RoleResponse, RoleSearchResponse
 from app.schema.response.permission import PermissionResponse, PermissionClaimResponse
 from app.schema.response.pagination import PagedData, create_paged_response
 from app.services.interfaces.role_service_interface import IRoleService
@@ -17,6 +18,27 @@ class RoleService(IRoleService):
     def __init__(self, role_repository: IRoleRepository):
         self.role_repository = role_repository
 
+    def _extract_permission_claims(self, role: Role) -> list[str]:
+        """Extract permission claim names from role."""
+        if not role.role_claims:
+            return []
+        return [
+            claim.claim_name 
+            for claim in role.role_claims 
+            if claim.claim_type == PermissionClaimType.PERMISSION.value
+        ]
+
+    def _to_response(self, role: Role) -> RoleResponse:
+        """Convert Role model to RoleResponse."""
+        return RoleResponse(
+            id=role.id,
+            name=role.name,
+            normalized_name=role.normalized_name,
+            description=role.description,
+            is_system=role.is_system,
+            claims=self._extract_permission_claims(role)
+        )
+
     def get_all_permissions(self) -> list[PermissionResponse]:
         """Get all available permissions in the system, grouped by resource."""
         permissions = AppPermissions.visible()
@@ -26,9 +48,9 @@ class RoleService(IRoleService):
         
         for perm in permissions:
             claim = PermissionClaimResponse(
-                action=perm.action.value.capitalize(),
+                action=perm.action.value,
                 description=perm.description,
-                permission=f"Permission.{perm.display_name}.{perm.action.value.capitalize()}"
+                permission=perm.name  # Use canonical lowercase format: permission.users.search
             )
             grouped[perm.display_name].append(claim)
         
@@ -39,7 +61,7 @@ class RoleService(IRoleService):
         ]
 
     async def create(self, role_request: RoleRequest) -> RoleResponse:
-        """Create a new role."""
+        """Create a new role with optional claims."""
         # Check if role name already exists
         if await self.role_repository.name_exists(role_request.name):
             raise ConflictException(
@@ -57,13 +79,16 @@ class RoleService(IRoleService):
 
         created_role = await self.role_repository.create(role)
 
-        return RoleResponse(
-            id=created_role.id,
-            name=created_role.name,
-            normalized_name=created_role.normalized_name,
-            description=created_role.description,
-            is_system=created_role.is_system
-        )
+        # Sync claims if provided
+        if role_request.claims:
+            await self.role_repository.sync_role_claims(
+                created_role.id, 
+                role_request.claims
+            )
+            # Reload role to get claims
+            created_role = await self.role_repository.get_by_id(created_role.id)
+
+        return self._to_response(created_role)
 
     async def get_by_id(self, role_id: uuid.UUID) -> RoleResponse:
         """Get role by id."""
@@ -75,21 +100,15 @@ class RoleService(IRoleService):
                 f"Role with id {role_id} not found"
             )
 
-        return RoleResponse(
-            id=role.id,
-            name=role.name,
-            normalized_name=role.normalized_name,
-            description=role.description,
-            is_system=role.is_system
-        )
+        return self._to_response(role)
 
-    async def search(self, page: int, page_size: int, name: str | None = None, is_system: bool | None = None) -> PagedData[RoleResponse]:
+    async def search(self, page: int, page_size: int, name: str | None = None, is_system: bool | None = None) -> PagedData[RoleSearchResponse]:
         """Search roles with pagination."""
         skip = calculate_skip(page, page_size)
         roles, total = await self.role_repository.get_all_paginated(skip, page_size, name, is_system)
 
         role_responses = [
-            RoleResponse(
+            RoleSearchResponse(
                 id=role.id,
                 name=role.name,
                 normalized_name=role.normalized_name,
@@ -102,7 +121,7 @@ class RoleService(IRoleService):
         return create_paged_response(role_responses, total, page, page_size)
 
     async def update(self, role_id: uuid.UUID, role_request: RoleRequest) -> RoleResponse:
-        """Update an existing role."""
+        """Update an existing role with claims sync."""
         role = await self.role_repository.get_by_id(role_id)
 
         if not role:
@@ -125,20 +144,23 @@ class RoleService(IRoleService):
                 f"Role with name '{role_request.name}' already exists"
             )
 
-        # Update role
+        # Update role fields
         role.name = role_request.name
         role.normalized_name = role_request.name.upper()
         role.description = role_request.description
 
         updated_role = await self.role_repository.update(role)
 
-        return RoleResponse(
-            id=updated_role.id,
-            name=updated_role.name,
-            normalized_name=updated_role.normalized_name,
-            description=updated_role.description,
-            is_system=updated_role.is_system
+        # Sync claims (add new, remove old, keep existing)
+        await self.role_repository.sync_role_claims(
+            role_id, 
+            role_request.claims
         )
+        
+        # Reload role to get updated claims
+        updated_role = await self.role_repository.get_by_id(role_id)
+
+        return self._to_response(updated_role)
 
     async def delete(self, role_id: uuid.UUID) -> bool:
         """Delete a role by id."""

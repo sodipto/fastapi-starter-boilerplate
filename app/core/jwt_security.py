@@ -1,11 +1,12 @@
 from datetime import datetime
 from datetime import timezone
-from fastapi import Request, HTTPException
+from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.core.config import settings
 from jose import jwt
 
 from app.utils.auth_utils import ALGORITHM
+from app.utils.exception_utils import UnauthorizedException
 
 def decode_jwt(token: str) -> dict:
     try:
@@ -22,12 +23,12 @@ class JWTBearer(HTTPBearer):
         credentials: HTTPAuthorizationCredentials = await super(JWTBearer, self).__call__(request)
         if credentials:
             if  credentials.scheme != "Bearer":
-                raise HTTPException(status_code=401, detail="Invalid authentication scheme!")
+                raise UnauthorizedException("Invalid authentication scheme!")
             if not self.verify_jwt(credentials.credentials):
-                raise HTTPException(status_code=401, detail="Invalid or expired token!")
+                raise UnauthorizedException("Invalid or expired token!")
             return credentials.credentials
         else:
-            raise HTTPException(status_code=401, detail="Invalid or expired token!")
+            raise UnauthorizedException("Invalid or expired token!")
 
     def verify_jwt(self, jwt_token: str) -> bool:
         is_token_valid: bool = False

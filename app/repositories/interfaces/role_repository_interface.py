@@ -2,6 +2,7 @@ from abc import abstractmethod
 import uuid
 
 from app.models.role import Role
+from app.models.role_claim import RoleClaim
 from app.repositories.interfaces.base_repository_interface import IBaseRepository
 
 
@@ -21,4 +22,14 @@ class IRoleRepository(IBaseRepository[Role]):
     @abstractmethod
     async def name_exists(self, name: str, exclude_id: uuid.UUID | None = None) -> bool:
         """Check if role name already exists."""
+        pass
+
+    @abstractmethod
+    async def get_role_claims(self, role_id: uuid.UUID) -> list[RoleClaim]:
+        """Get all claims for a role."""
+        pass
+
+    @abstractmethod
+    async def sync_role_claims(self, role_id: uuid.UUID, claim_names: list[str]) -> list[RoleClaim]:
+        """Sync role claims - add new, remove old, keep existing."""
         pass

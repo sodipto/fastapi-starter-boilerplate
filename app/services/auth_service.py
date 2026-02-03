@@ -79,6 +79,7 @@ class AuthService(IAuthService):
                 email_confirmed=user.email_confirmed,
                 roles=[
                     UserRoleResponse(
+                        id=user_role.role.id,
                         name=user_role.role.name,
                         normalized_name=user_role.role.normalized_name
                     )
@@ -134,6 +135,7 @@ class AuthService(IAuthService):
                 email_confirmed=user.email_confirmed,
                 roles=[
                     UserRoleResponse(
+                        id=user_role.role.id,
                         name=user_role.role.name,
                         normalized_name=user_role.role.normalized_name
                     )

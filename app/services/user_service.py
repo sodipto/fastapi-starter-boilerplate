@@ -23,6 +23,7 @@ class UserService(IUserService):
         """Convert User model to UserResponse."""
         roles = [
             UserRoleResponse(
+                id=user_role.role.id,
                 name=user_role.role.name,
                 normalized_name=user_role.role.normalized_name
             )
@@ -104,15 +105,18 @@ class UserService(IUserService):
                 f"User with email '{user_request.email}' already exists"
             )
 
-        # Validate role IDs if provided
+        # Validate role ids if provided
         if user_request.role_ids:
-            for role_id in user_request.role_ids:
-                role = await self.role_repository.get_by_id(role_id)
-                if not role:
-                    raise NotFoundException(
-                        "role_id",
-                        f"Role with id {role_id} not found"
-                    )
+            existing_roles = await self.role_repository.get_by_ids(user_request.role_ids)
+            existing_role_ids = {role.id for role in existing_roles}
+            
+            # Find missing role IDs
+            missing_role_ids = [role_id for role_id in user_request.role_ids if role_id not in existing_role_ids]
+            if missing_role_ids:
+                raise NotFoundException(
+                    "role_id",
+                    f"Roles with ids {missing_role_ids} not found"
+                )
                 
         # Create user
         user = User(
@@ -155,13 +159,16 @@ class UserService(IUserService):
 
         # Validate role IDs if provided
         if user_request.role_ids is not None:
-            for role_id in user_request.role_ids:
-                role = await self.role_repository.get_by_id(role_id)
-                if not role:
-                    raise NotFoundException(
-                        "role_id",
-                        f"Role with id {role_id} not found"
-                    )
+            existing_roles = await self.role_repository.get_by_ids(user_request.role_ids)
+            existing_role_ids = {role.id for role in existing_roles}
+            
+            # Find missing role IDs
+            missing_role_ids = [role_id for role_id in user_request.role_ids if role_id not in existing_role_ids]
+            if missing_role_ids:
+                raise NotFoundException(
+                    "role_id",
+                    f"Roles with ids {missing_role_ids} not found"
+                )
 
         updated_user = await self.user_repository.update(user)
 

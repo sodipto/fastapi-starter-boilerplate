@@ -13,6 +13,7 @@ class UserBaseResponse(BaseModel):
 
 class UserRoleResponse(BaseModel):
     """User role response with role details."""
+    id: uuid.UUID
     name: str
     normalized_name: str
 

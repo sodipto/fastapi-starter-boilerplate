@@ -30,6 +30,16 @@ class IRoleRepository(IBaseRepository[Role]):
         pass
 
     @abstractmethod
+    async def get_by_ids(self, ids: list[uuid.UUID]) -> list[Role]:
+        """Get multiple roles by ids."""
+        pass
+
+    @abstractmethod
     async def sync_role_claims(self, role_id: uuid.UUID, claim_names: list[str]) -> list[RoleClaim]:
         """Sync role claims - add new, remove old, keep existing."""
+        pass
+    
+    @abstractmethod
+    async def has_users(self, role_id: uuid.UUID) -> tuple[bool, int]:
+        """Check if role is assigned to any users."""
         pass

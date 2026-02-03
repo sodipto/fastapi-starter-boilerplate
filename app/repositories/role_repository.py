@@ -6,6 +6,7 @@ import uuid
 from app.core.rbac import PermissionClaimType
 from app.models.role import Role
 from app.models.role_claim import RoleClaim
+from app.models.user_role import UserRole
 from app.repositories.base_repository import BaseRepository
 from app.repositories.interfaces.role_repository_interface import IRoleRepository
 
@@ -22,6 +23,17 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
             .where(Role.id == str(id))
         )
         return result.scalars().first()
+
+    async def get_by_ids(self, ids: list[uuid.UUID]) -> list[Role]:
+        """Get multiple roles by ids."""
+        if not ids:
+            return []
+        
+        str_ids = [str(id) for id in ids]
+        result = await self.db.execute(
+            select(Role).where(Role.id.in_(str_ids))
+        )
+        return list(result.scalars().all())
         
     async def get_by_name(self, name: str) -> Role | None:
         """Get role by normalized name."""
@@ -124,3 +136,17 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
         
         # Return updated claims
         return await self.get_role_claims(role_id)
+
+    async def has_users(self, role_id: uuid.UUID) -> tuple[bool, int]:
+        """Check if role is assigned to any users.
+        
+        Returns:
+            Tuple of (has_users, user_count)
+        """
+        result = await self.db.execute(
+            select(func.count()).select_from(UserRole).where(
+                UserRole.role_id == str(role_id)
+            )
+        )
+        count = result.scalar()
+        return count > 0, count

@@ -19,6 +19,7 @@ class ProfileService(IProfileService):
         """Convert User model to UserResponse."""
         roles = [
             UserRoleResponse(
+                id=user_role.role.id,
                 name=user_role.role.name,
                 normalized_name=user_role.role.normalized_name
             )

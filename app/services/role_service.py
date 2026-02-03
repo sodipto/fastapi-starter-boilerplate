@@ -179,4 +179,12 @@ class RoleService(IRoleService):
                 "System roles cannot be deleted"
             )
 
+        # Check if role is assigned to any users
+        has_users, user_count = await self.role_repository.has_users(role_id)
+        if has_users:
+            raise ConflictException(
+                "role_in_use",
+                f"Cannot delete role '{role.name}' because it is assigned to {user_count} user(s). Please remove the role from all users before deleting."
+            )
+
         return await self.role_repository.delete(role_id)

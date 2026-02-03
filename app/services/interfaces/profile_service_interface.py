@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import uuid
 
+from app.schema.request.identity.profile import UpdateProfileRequest
 from app.schema.response.user import UserResponse
 
 
@@ -13,7 +14,7 @@ class IProfileService(ABC):
         pass
 
     @abstractmethod
-    async def update_profile(self, user_id: uuid.UUID, full_name: str, email: str) -> UserResponse:
+    async def update_profile(self, user_id: uuid.UUID, request: UpdateProfileRequest) -> UserResponse:
         """Update user's profile information."""
         pass
 

@@ -1,6 +1,8 @@
 import uuid
 
 from app.repositories.interfaces.user_repository_interface import IUserRepository
+from app.schema.request.identity.profile import UpdateProfileRequest
+from app.schema.response.meta import ResponseMeta
 from app.schema.response.user import UserResponse, UserRoleResponse
 from app.services.interfaces.profile_service_interface import IProfileService
 from app.utils.auth_utils import verify_password, get_password_hash
@@ -13,15 +15,8 @@ class ProfileService(IProfileService):
     def __init__(self, user_repository: IUserRepository):
         self.user_repository = user_repository
 
-    async def get_profile(self, user_id: uuid.UUID) -> UserResponse:
-        """Get current user's profile."""
-        user = await self.user_repository.get_by_id_with_roles(user_id)
-        if not user:
-            raise NotFoundException(
-                key="user_id",
-                message=f"User not found with id: {user_id}"
-            )
-        
+    def _to_response(self, user) -> UserResponse:
+        """Convert User model to UserResponse."""
         roles = [
             UserRoleResponse(
                 name=user_role.role.name,
@@ -41,7 +36,18 @@ class ProfileService(IProfileService):
             roles=roles
         )
 
-    async def update_profile(self, user_id: uuid.UUID, full_name: str, email: str) -> UserResponse:
+    async def get_profile(self, user_id: uuid.UUID) -> UserResponse:
+        """Get current user's profile."""
+        user = await self.user_repository.get_by_id_with_roles(user_id)
+        if not user:
+            raise NotFoundException(
+                key="user_id",
+                message=f"User not found with id: {user_id}"
+            )
+        
+        return self._to_response(user)
+
+    async def update_profile(self, user_id: uuid.UUID, request: UpdateProfileRequest) -> UserResponse:
         """Update user's profile information."""
         user = await self.user_repository.get_by_id_with_roles(user_id)
         if not user:
@@ -50,39 +56,15 @@ class ProfileService(IProfileService):
                 message=f"User not found with id: {user_id}"
             )
         
-        # Check if email is already taken by another user
-        existing_user = await self.user_repository.get_by_email(email)
-        if existing_user and existing_user.id != user.id:
-            raise BadRequestException(
-                key="email",
-                message=f"Email {email} is already in use"
-            )
-        
-        user.full_name = full_name
-        user.email = email.lower()
+        user.full_name = request.full_name
+        if request.phone_number is not None:
+            user.phone_number = request.phone_number
         
         updated_user = await self.user_repository.update(user)
         
-        roles = [
-            UserRoleResponse(
-                name=user_role.role.name,
-                normalized_name=user_role.role.normalized_name
-            )
-            for user_role in (updated_user.roles or [])
-        ]
-        
-        return UserResponse(
-            id=updated_user.id,
-            email=updated_user.email,
-            full_name=updated_user.full_name,
-            phone_number=updated_user.phone_number,
-            profile_image_url=updated_user.profile_image_url,
-            is_active=updated_user.is_active,
-            email_confirmed=updated_user.email_confirmed,
-            roles=roles
-        )
+        return self._to_response(updated_user)
 
-    async def change_password(self, user_id: uuid.UUID, current_password: str, new_password: str) -> dict:
+    async def change_password(self, user_id: uuid.UUID, current_password: str, new_password: str) -> ResponseMeta:
         """Change user's password."""
         user = await self.user_repository.get_by_id(user_id)
         if not user:
@@ -93,7 +75,8 @@ class ProfileService(IProfileService):
         
         # Verify current password
         if not verify_password(current_password, user.password):
-            raise UnauthorizedException(
+            raise BadRequestException(
+                key="current_password",
                 message="Current password is incorrect"
             )
         
@@ -101,4 +84,4 @@ class ProfileService(IProfileService):
         user.password = get_password_hash(new_password)
         await self.user_repository.update(user)
         
-        return {"message": "Password changed successfully"}
+        return ResponseMeta(message="Password changed successfully")

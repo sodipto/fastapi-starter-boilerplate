@@ -147,12 +147,10 @@ class UserService(IUserService):
             )
 
         # Update fields if provided
-        if user_request.full_name is not None:
-            user.full_name = user_request.full_name
+        user.full_name = user_request.full_name
+        user.is_active = user_request.is_active
         if user_request.phone_number is not None:
             user.phone_number = user_request.phone_number
-        if user_request.is_active is not None:
-            user.is_active = user_request.is_active
         
 
         # Validate role IDs if provided

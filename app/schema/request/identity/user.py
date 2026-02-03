@@ -58,7 +58,6 @@ class UserUpdateRequest(BaseModel):
     
     full_name: Annotated[str, Field(min_length=1, max_length=100, description="Full name of the user")] | None = None
     phone_number: str | None = None
-    password: Annotated[str, Field(min_length=8, description="User password (min 8 characters)")] | None = None
     is_active: bool | None = None
     role_ids: list[uuid.UUID] | None = None
 
@@ -86,15 +85,3 @@ class UserUpdateRequest(BaseModel):
                 'Phone number must be at least 10 digits'
             )
         return cleaned
-
-    @field_validator('password')
-    @classmethod
-    def validate_password(cls, v: str | None) -> str | None:
-        if v is None:
-            return None
-        if len(v) < 8:
-            raise PydanticCustomError(
-                'password_too_short',
-                'Password must be at least 8 characters long'
-            )
-        return v

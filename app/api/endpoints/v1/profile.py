@@ -6,6 +6,7 @@ from dependency_injector.wiring import inject, Provide
 from app.core.container import Container
 from app.core.identity import get_current_user
 from app.core.jwt_security import JWTBearer
+from app.schema.response.meta import ResponseMeta
 from app.schema.response.user import UserResponse
 from app.schema.request.identity.profile import UpdateProfileRequest, ChangePasswordRequest
 from app.services.interfaces.profile_service_interface import IProfileService
@@ -43,19 +44,15 @@ async def update_profile(
     Update the profile of the currently logged-in user.
     
     Args:
-        request: UpdateProfileRequest containing full_name and email
+        request: UpdateProfileRequest containing full_name and phone_number
         
     Returns:
         UserResponse: Updated user profile information
     """
-    return await profile_service.update_profile(
-        user_id=user_id,
-        full_name=request.full_name,
-        email=request.email
-    )
+    return await profile_service.update_profile(user_id=user_id, request=request)
 
 
-@router.put("/password", summary="Change current user password", response_model=dict)
+@router.put("/password", summary="Change current user password", response_model=ResponseMeta)
 @inject
 async def change_password(
     request: ChangePasswordRequest,
@@ -73,7 +70,7 @@ async def change_password(
         request: ChangePasswordRequest with current_password and new_password
         
     Returns:
-        dict: Success message
+        ResponseMeta: Success message
         
     Raises:
         UnauthorizedException: If current password is incorrect

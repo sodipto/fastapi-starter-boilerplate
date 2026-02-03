@@ -8,7 +8,7 @@ from app.core.constants.validation import EMAIL_REGEX, ALPHANUMERIC_REGEX
 class UpdateProfileRequest(BaseModel):
     """Schema for updating user profile information."""
     full_name: Annotated[str, Field(min_length=1, max_length=256, description="User's full name")]
-    email: Annotated[str, Field(description="User's email address")]
+    phone_number: Annotated[str | None, Field(description="User's phone number")] = None
     
     @field_validator("full_name")
     @classmethod
@@ -20,21 +20,11 @@ class UpdateProfileRequest(BaseModel):
             )
         return value
     
-    @field_validator("email")
-    @classmethod
-    def check_email_format(cls, value: str) -> str:
-        if not EMAIL_REGEX.match(value):
-            raise PydanticCustomError(
-                "invalid_email_format",
-                "Email must be a valid email address!"
-            )
-        return value
-    
     class Config:
         json_schema_extra = {
             "example": {
                 "full_name": "John Doe",
-                "email": "john.doe@example.com"
+                "phone_number": "+1234567890"
             }
         }
 

@@ -14,9 +14,12 @@ Examples:
 - "0 0 1 * *": First day of every month at midnight
 """
 
+import logging
 from typing import Any, Callable, TypedDict
 
 from app.jobs.health_check import health_check_job
+
+logger = logging.getLogger(__name__)
 
 class CronJobConfig(TypedDict):
     """Configuration for a cron-based job."""
@@ -56,6 +59,6 @@ def register_all_jobs(scheduler_service) -> None:
                     func=job_config["func"],
                     cron_expression=job_config["cron_expression"]
                 )
-                print(f"[Jobs] Registered job: {job_config['job_id']}")
+                logger.info(f"Registered job: {job_config['job_id']}")
             except Exception as e:
-                print(f"[Jobs] Failed to register job {job_config['job_id']}: {e}")
+                logger.error(f"Failed to register job {job_config['job_id']}: {e}")

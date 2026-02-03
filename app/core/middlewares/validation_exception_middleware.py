@@ -5,8 +5,7 @@ from fastapi import Request
 from fastapi import status
 from app.schema.response.error import ErrorBody, ErrorResponse
 
-def custom_validation_exception_middleware(request: Request, exc: RequestValidationError):
-    print(request.method)
+def custom_validation_exception_middleware(exc: RequestValidationError):
     messages = {}
     for err in exc.errors():
         loc_parts = err.get("loc", [])

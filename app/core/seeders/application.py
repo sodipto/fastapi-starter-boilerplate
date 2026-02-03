@@ -1,3 +1,4 @@
+import logging
 from app.core.database.session import async_session
 from app.core.rbac import AppPermissions, AppRoles, PermissionClaimType
 from app.models.role import Role
@@ -9,6 +10,11 @@ from sqlalchemy.future import select
 from app.models.user_role import UserRole
 from app.utils.auth_utils import get_password_hash
 
+logger = logging.getLogger("app.core.seeders.application")
+print("LOGGER LEVEL:", logger.level)
+print("EFFECTIVE LEVEL:", logger.getEffectiveLevel())
+print("ROOT LEVEL:", logging.getLogger().level)
+print("HANDLERS:", logging.getLogger().handlers)
 
 class ApplicationSeeder:
     def __init__(self):
@@ -18,9 +24,12 @@ class ApplicationSeeder:
         ]
 
     async def seed_data(self):
+        logger.warning("Starting application data seeding...")
         async with async_session() as session:
             for seeder in self.seeders:
+                logger.debug(f"Running seeder: {seeder.__name__}")
                 await seeder(session)
+        logger.info("Application data seeding completed.")
 
     async def assign_permissions_to_role(
         self, 
@@ -57,11 +66,6 @@ class ApplicationSeeder:
         
         await session.flush()
         
-        if permissions_to_add:
-            print(f"  Added {len(permissions_to_add)} permissions to {role.name}")
-        if permissions_to_remove:
-            print(f"  Removed {len(permissions_to_remove)} permissions from {role.name}")
-
     async def seed_sa_user(self, session: AsyncSession):
         user = User(
             email="sa@example.com",
@@ -89,12 +93,12 @@ class ApplicationSeeder:
                 session.add(user_role)
 
             await session.commit()
-            print("User seeded successfully.")
+            logger.info("User seeded successfully.")
         else:
             existing_user.full_name = user.full_name
             existing_user.password = user.password
             await session.commit()
-            print("User updated successfully.")
+            logger.info("User updated successfully.")
 
     async def seed_system_roles(self, session: AsyncSession):
         """Seed all system roles with their respective permissions."""
@@ -106,7 +110,7 @@ class ApplicationSeeder:
             
             if not existing_role:
                 # Create new role
-                print(f"Seeding {system_role.name} role...")
+                logger.info(f"Seeding {system_role.name} role...")
                 role = Role(
                     name=system_role.name,
                     normalized_name=system_role.normalized_name,
@@ -135,4 +139,4 @@ class ApplicationSeeder:
                 )
         
         await session.commit()
-        print("System roles seeded with permissions.")
+        logger.info("System roles seeded with permissions.")

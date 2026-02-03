@@ -1,3 +1,5 @@
+
+import logging
 from logging.config import fileConfig
 
 from dotenv import load_dotenv
@@ -42,8 +44,11 @@ supports_schemas = DatabaseConfig.supports_schemas(db_provider)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
+
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+logger = logging.getLogger(__name__)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -118,26 +123,22 @@ def run_migrations_online() -> None:
     with connectable.connect() as connection:
         # Only ensure schemas exist if the provider supports them
         if supports_schemas:
-            print(f">>> Ensuring schemas exist for {db_provider.value}")
+            logger.info(f"Ensuring schemas exist for {db_provider.value}")
             with connection.begin():
                 ensure_schemas_exist(connection, db_provider)
         else:
-            print(f">>> Skipping schema creation for {db_provider.value} (not supported)")
-            
+            logger.info(f"Skipping schema creation for {db_provider.value} (not supported)")
         # Configure context based on schema support
         context_config = {
             "connection": connection,
             "target_metadata": target_metadata,
             "render_item": render_item,
         }
-        
         if supports_schemas:
             context_config["include_schemas"] = True
             if default_schema:
                 context_config["version_table_schema"] = default_schema
-        
         context.configure(**context_config)
-
         with context.begin_transaction():
             context.run_migrations()
 

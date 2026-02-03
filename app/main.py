@@ -1,5 +1,8 @@
-from contextlib import asynccontextmanager
+# from app.core.logging import setup_logging
+# setup_logging()
+import logging
 
+from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -16,15 +19,18 @@ from app.core.seeders.application import ApplicationSeeder
 from app.jobs import register_all_jobs
 from app.services.cache.cache_factory import init_cache_service, shutdown_cache_service
 
+logger = logging.getLogger("app.main")
+
 @asynccontextmanager
 async def startup(app: FastAPI):
-    print("Starting up application...")
+    logger.info("Starting up application...")
+    logger.info("Application startup initiated.")
     if settings.DATABASE_ENABLED:
         run_pending_migrations()
         try:
             await ApplicationSeeder().seed_data()
         except Exception as e:
-            print(f"Seeding failed: {e}")
+            logger.error(f"Seeding failed: {e}")
             raise SystemExit("Application startup aborted due to seeding failure.")
     
     # Initialize cache service
@@ -32,7 +38,7 @@ async def startup(app: FastAPI):
     app.state.cache_service = cache_service
     # Inject cache_service into the DI container
     app.container.cache_service.override(cache_service)
-    print(f"Cache service initialized (type: {settings.CACHE_TYPE})")
+    logger.info(f"Cache service initialized (type: {settings.CACHE_TYPE})")
     
     # Initialize and start the background scheduler
     scheduler_service = None
@@ -40,22 +46,22 @@ async def startup(app: FastAPI):
         scheduler_service = app.container.scheduler_service()
         register_all_jobs(scheduler_service)
         scheduler_service.start()
-        print("Background scheduler started.")
+        logger.info("Background scheduler started.")
     
     yield
 
     # Shutdown
-    print("Shutting down application...")
+    logger.info("Shutting down application...")
     
     # Shutdown cache service
     if hasattr(app.state, "cache_service"):
         await shutdown_cache_service(app.state.cache_service)
-        print("Cache service shutdown.")
+        logger.info("Cache service shutdown.")
     
     # Shutdown scheduler
     if scheduler_service:
         scheduler_service.shutdown()
-        print("Background scheduler stopped.")
+        logger.info("Background scheduler stopped.")
     
 app = FastAPI(
     title=f"Python FastAPI Boilerplate - {settings.ENV.capitalize()}",

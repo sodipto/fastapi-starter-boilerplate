@@ -11,9 +11,6 @@ class UserService(IUserService):
     async def get_by_id(self, user_id: uuid.UUID) -> UserResponse:
         user =  await self.user_repository.get_by_id_with_roles(user_id)
 
-        for user_role in user.roles:
-            print("Role:", user_role.role.normalized_name)
-
         if user:
             return UserResponse(full_name=user.full_name, email=user.email, id=user.id)
         else:

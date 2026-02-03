@@ -29,11 +29,11 @@ class DatabaseConfig:
     # Engine arguments specific to each provider
     ENGINE_ARGS: Dict[DatabaseProvider, Dict[str, Any]] = {
         DatabaseProvider.POSTGRESQL: {
-            "echo": True,
+            "echo": False,
             "pool_pre_ping": True,
         },
         DatabaseProvider.MSSQL: {
-            "echo": True,
+            "echo": False,
             "pool_pre_ping": True,
             # For MSSQL with pyodbc, we need to use NullPool or configure properly
             "pool_size": 5,

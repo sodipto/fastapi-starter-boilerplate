@@ -178,9 +178,9 @@ class SchedulerService(ISchedulerService):
                 kwargs=kwargs,
                 replace_existing=True
             )
-            print(f"[Scheduler] Scheduled one-time job '{job_id}' to run at {run_at.isoformat()}")
+            logger.info(f"Scheduled one-time job '{job_id}' to run at {run_at.isoformat()}")
         except Exception as e:
-            print(f"[Scheduler] Failed to schedule one-time job '{job_id}': {e}")
+            logger.error(f"Failed to schedule one-time job '{job_id}': {e}")
             raise
 
     def start(self) -> None:

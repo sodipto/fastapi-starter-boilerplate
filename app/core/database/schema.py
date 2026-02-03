@@ -1,6 +1,9 @@
+import logging
 from sqlalchemy.schema import CreateSchema
 from sqlalchemy import text
 from app.core.database.provider import DatabaseProvider
+
+logger = logging.getLogger(__name__)
 
 class DbSchemas:
     identity = "identity"
@@ -28,10 +31,8 @@ def ensure_schemas_exist(engine, provider: DatabaseProvider):
                     END
                 """)
                 engine.execute(check_query)
-                print(f"Schema '{schema_name}' ensured to exist")
             elif provider == DatabaseProvider.POSTGRESQL:
                 # PostgreSQL supports IF NOT EXISTS
                 engine.execute(CreateSchema(schema_name, if_not_exists=True))
-                print(f"Schema '{schema_name}' ensured to exist")
         except Exception as e:
-            print(f"Warning: Could not create schema '{schema_name}': {e}")
+            logger.error(f"Could not create schema '{schema_name}': {e}")

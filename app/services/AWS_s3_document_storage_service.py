@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from typing import IO
 from io import BytesIO
@@ -9,6 +10,9 @@ from app.core.config import settings
 from app.services.interfaces.document_storage_service_interface import DocumentStorageServiceInterface
 from app.schema.response.meta import ResponseMeta
 from app.utils.exception_utils import BadRequestException, NotFoundException
+
+
+logger = logging.getLogger(__name__)
 
 
 class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
@@ -95,10 +99,10 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             
         except ClientError as e:
             # Log error in production
-            print(f"Error uploading file to S3: {e}")
+            logger.error(f"Error uploading file to S3: {e}")
             raise BadRequestException("file", f"Failed to upload file to S3: {str(e)}")
         except Exception as e:
-            print(f"Unexpected error during file upload: {e}")
+            logger.error(f"Unexpected error during file upload: {e}")
             raise BadRequestException("file", f"Unexpected error during file upload: {str(e)}")
     
     async def upload_stream(
@@ -136,10 +140,10 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             return self._build_file_url(file_path)
             
         except ClientError as e:
-            print(f"Error uploading stream to S3: {e}")
+            logger.error(f"Error uploading stream to S3: {e}")
             raise BadRequestException("stream", f"Failed to upload stream to S3: {str(e)}")
         except Exception as e:
-            print(f"Unexpected error during stream upload: {e}")
+            logger.error(f"Unexpected error during stream upload: {e}")
             raise BadRequestException("stream", f"Unexpected error during stream upload: {str(e)}")
     
     async def remove(
@@ -191,11 +195,11 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             
         except ClientError as e:
             error_message = f"Error deleting file from S3: {str(e)}"
-            print(error_message)
+            logger.error(error_message)
             return ResponseMeta(message=error_message)
         except Exception as e:
             error_message = f"Unexpected error during file deletion: {str(e)}"
-            print(error_message)
+            logger.error(error_message)
             return ResponseMeta(message=error_message)
     
     async def copy(
@@ -254,10 +258,10 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             return self._build_file_url(destination_key)
             
         except ClientError as e:
-            print(f"Error copying file in S3: {e}")
+            logger.error(f"Error copying file in S3: {e}")
             raise BadRequestException("copy", f"Failed to copy file in S3: {str(e)}")
         except Exception as e:
-            print(f"Unexpected error during file copy: {e}")
+            logger.error(f"Unexpected error during file copy: {e}")
             raise BadRequestException("copy", f"Unexpected error during file copy: {str(e)}")
     
     async def move(
@@ -303,10 +307,10 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             # Re-raise NotFoundException from copy method
             raise
         except ClientError as e:
-            print(f"Error moving file in S3: {e}")
+            logger.error(f"Error moving file in S3: {e}")
             raise BadRequestException("move", f"Failed to move file in S3: {str(e)}")
         except Exception as e:
-            print(f"Unexpected error during file move: {e}")
+            logger.error(f"Unexpected error during file move: {e}")
             raise BadRequestException("move", f"Unexpected error during file move: {str(e)}")
     
     def _build_file_url(self, file_path: str) -> str:

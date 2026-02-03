@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import uuid
 
 from app.schema.request.identity.user import UserRequest, UserUpdateRequest
-from app.schema.response.user import UserResponse, UserSearchResponse
+from app.schema.response.user import UserResponse, UserSearchResponse, UserRoleResponse
 from app.schema.response.pagination import PagedData
 
 
@@ -39,4 +39,14 @@ class IUserService(ABC):
     @abstractmethod
     async def delete(self, user_id: uuid.UUID) -> None:
         """Delete a user."""
+        pass
+
+    @abstractmethod
+    async def get_user_roles(self, user_id: uuid.UUID) -> list[UserRoleResponse]:
+        """Get all roles assigned to a user."""
+        pass
+
+    @abstractmethod
+    async def update_status(self, user_id: uuid.UUID, is_active: bool) -> UserResponse:
+        """Update user's active status."""
         pass

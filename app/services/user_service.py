@@ -185,3 +185,36 @@ class UserService(IUserService):
             )
 
         await self.user_repository.delete(user_id)
+
+    async def get_user_roles(self, user_id: uuid.UUID) -> list[UserRoleResponse]:
+        """Get all roles assigned to a user."""
+        user = await self.user_repository.get_by_id_with_roles(user_id)
+
+        if not user:
+            raise NotFoundException(
+                "user_id",
+                f"User with id {user_id} not found"
+            )
+
+        return [
+            UserRoleResponse(
+                name=user_role.role.name,
+                normalized_name=user_role.role.normalized_name
+            )
+            for user_role in (user.roles or [])
+        ]
+
+    async def update_status(self, user_id: uuid.UUID, is_active: bool) -> UserResponse:
+        """Update user's active status."""
+        user = await self.user_repository.get_by_id_with_roles(user_id)
+
+        if not user:
+            raise NotFoundException(
+                "user_id",
+                f"User with id {user_id} not found"
+            )
+
+        user.is_active = is_active
+        await self.user_repository.update(user)
+
+        return self._to_response(user)

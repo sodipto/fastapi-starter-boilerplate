@@ -18,7 +18,8 @@ from app.core.jwt_security import JWTBearer
 from app.core.constants.pagination import PAGE, PAGE_SIZE
 from app.core.rbac import AppPermissions, require_permission
 from app.schema.request.identity.user import UserRequest, UserUpdateRequest
-from app.schema.response.user import UserResponse, UserSearchResponse
+from app.schema.request.identity.user_status import UserStatusRequest
+from app.schema.response.user import UserResponse, UserSearchResponse, UserRoleResponse
 from app.schema.response.pagination import PagedData
 from app.services.interfaces.user_service_interface import IUserService
 
@@ -126,6 +127,53 @@ async def update(
         - permission.users.update
     """
     return await user_service.update(id, user_request)
+
+# =============================================================================
+# GET ROLES - Requires USERS_VIEW permission
+# =============================================================================
+@router.get(
+    "/{id}/roles",
+    summary="Get user roles",
+    response_model=list[UserRoleResponse],
+    dependencies=[Depends(require_permission(AppPermissions.USERS_VIEW))]
+)
+@inject
+async def get_user_roles(
+    id: uuid.UUID,
+    user_service: IUserService = Depends(Provide[Container.user_service])
+):
+    """
+    Get all roles assigned to a specific user.
+    
+    Permission Required:
+        - permission.users.view
+    """
+    return await user_service.get_user_roles(id)
+
+
+# =============================================================================
+# UPDATE STATUS - Requires USERS_UPDATE permission
+# =============================================================================
+@router.patch(
+    "/{id}/status",
+    summary="Update user status",
+    response_model=UserResponse,
+    dependencies=[Depends(require_permission(AppPermissions.USERS_UPDATE))]
+)
+@inject
+async def update_status(
+    id: uuid.UUID,
+    status_request: UserStatusRequest,
+    user_service: IUserService = Depends(Provide[Container.user_service])
+):
+    """
+    Update user's active status.
+    
+    Permission Required:
+        - permission.users.update
+    """
+    return await user_service.update_status(id, status_request.is_active)
+
 
 
 # =============================================================================

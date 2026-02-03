@@ -2,13 +2,14 @@ from datetime import datetime, timezone, timedelta
 import uuid
 
 from app.core.config import settings
+from app.models import role, user_role
 from app.repositories.interfaces.user_repository_interface import IUserRepository
 from app.schema.response.meta import ResponseMeta
 from app.services.interfaces import IAuthService, ITokenService, ICacheService, IEmailService
 from app.utils.auth_utils import get_password_hash, verify_password
 from app.utils.exception_utils import NotFoundException, UnauthorizedException, BadRequestException
 from app.schema.response.auth import AuthResponse
-from app.schema.response.user import UserResponse
+from app.schema.response.user import UserResponse, UserRoleResponse, UserRoleResponse
 
 
 class AuthService(IAuthService):
@@ -27,7 +28,7 @@ class AuthService(IAuthService):
 
     async def login(self, email: str, password: str) -> AuthResponse:
         # Verify user exists
-        user = await self.user_repository.get_by_email(email)
+        user = await self.user_repository.get_by_email_with_roles(email)
         if not user:
             raise NotFoundException(
                 key="email",
@@ -72,6 +73,17 @@ class AuthService(IAuthService):
                 id=user.id,
                 email=user.email,
                 full_name=user.full_name,
+                phone_number=user.phone_number,
+                profile_image_url=user.profile_image_url,
+                is_active=user.is_active,
+                email_confirmed=user.email_confirmed,
+                roles=[
+                    UserRoleResponse(
+                        name=user_role.role.name,
+                        normalized_name=user_role.role.normalized_name
+                    )
+                    for user_role in (user.roles or [])
+                ]
             ),
         )
 
@@ -82,7 +94,7 @@ class AuthService(IAuthService):
             raise UnauthorizedException(message="Invalid access token!")
 
         # Fetch user from database
-        user = await self.user_repository.get_by_id(user_id)
+        user = await self.user_repository.get_by_id_with_roles(user_id)
         if not user:
             raise NotFoundException(
                 key="user_id",
@@ -116,6 +128,17 @@ class AuthService(IAuthService):
                 id=user.id,
                 email=user.email,
                 full_name=user.full_name,
+                phone_number=user.phone_number,
+                profile_image_url=user.profile_image_url,
+                is_active=user.is_active,
+                email_confirmed=user.email_confirmed,
+                roles=[
+                    UserRoleResponse(
+                        name=user_role.role.name,
+                        normalized_name=user_role.role.normalized_name
+                    )
+                    for user_role in (user.roles or [])
+                ]
             ),
         )
 

@@ -7,7 +7,6 @@ from app.services.permission_service import PermissionService
 from app.services.AWS_s3_document_storage_service import AwsS3DocumentStorageService
 from app.repositories import UserRepository, EmailLogRepository
 from app.repositories.role_repository import RoleRepository
-from app.repositories.profile_repository import ProfileRepository
 from app.repositories.permission_repository import PermissionRepository
 from dependency_injector import containers, providers
 from app.core.database.session import async_session
@@ -47,11 +46,6 @@ class Container(containers.DeclarativeContainer):
         db=db_session
     )
 
-    profile_repository = providers.Factory(
-        ProfileRepository,
-        db=db_session
-    )
-
     # RBAC: Permission repository for loading user permissions
     permission_repository = providers.Factory(
         PermissionRepository,
@@ -64,12 +58,13 @@ class Container(containers.DeclarativeContainer):
 
     user_service = providers.Factory(
         UserService,
-        user_repository=user_repository
+        user_repository=user_repository,
+        role_repository=role_repository
     )
 
     profile_service = providers.Factory(
         ProfileService,
-        profile_repository=profile_repository
+        user_repository=user_repository
     )
 
     role_service = providers.Factory(

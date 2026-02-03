@@ -11,10 +11,10 @@ from app.models.user_role import UserRole
 from app.utils.auth_utils import get_password_hash
 
 logger = logging.getLogger("app.core.seeders.application")
-print("LOGGER LEVEL:", logger.level)
-print("EFFECTIVE LEVEL:", logger.getEffectiveLevel())
-print("ROOT LEVEL:", logging.getLogger().level)
-print("HANDLERS:", logging.getLogger().handlers)
+# print("LOGGER LEVEL:", logger.level)
+# print("EFFECTIVE LEVEL:", logger.getEffectiveLevel())
+# print("ROOT LEVEL:", logging.getLogger().level)
+# print("HANDLERS:", logging.getLogger().handlers)
 
 class ApplicationSeeder:
     def __init__(self):

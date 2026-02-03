@@ -8,8 +8,8 @@ from app.core.constants.validation import EMAIL_REGEX
 class ResetPasswordRequest(BaseModel):
     email: str = Field(description="Email address associated with the account")
     verification_code: str = Field(description="Verification code sent to email")
-    new_password: Annotated[str, Field(min_length=6, description="New password (minimum 6 characters)")]
-    confirm_password: Annotated[str, Field(min_length=6, description="Confirm new password")]
+    new_password: Annotated[str, Field(min_length=8, description="New password (minimum 8 characters)")]
+    confirm_password: Annotated[str, Field(min_length=8, description="Confirm new password")]
 
     @field_validator("email")
     def check_email_format(cls, value):

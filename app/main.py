@@ -1,15 +1,15 @@
-# from app.core.logging import setup_logging
-# setup_logging()
-import logging
-
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.core.container import Container
-from app.core.config import settings
 from fastapi import FastAPI
 
+# Initialize logging BEFORE importing any application modules
+from app.core.config import settings
+from app.core.logger import setup_logging, get_logger
+setup_logging(settings.LOG_LEVEL)
+
+# Now import application modules (after logging is configured)
+from app.core.container import Container
 from app.api.endpoints.routes import routers as v1_routers
 from app.core.database.migrate import run_pending_migrations
 from app.core.middlewares.exception_middleware import CustomExceptionMiddleware
@@ -19,18 +19,22 @@ from app.core.seeders.application import ApplicationSeeder
 from app.jobs import register_all_jobs
 from app.services.cache.cache_factory import init_cache_service, shutdown_cache_service
 
-logger = logging.getLogger("app.main")
 
 @asynccontextmanager
 async def startup(app: FastAPI):
-    logger.info("Starting up application...")
-    logger.info("Application startup initiated.")
+    # Use a fresh logger reference in case logging was reconfigured
+    _logger = get_logger(__name__)
+    
+    _logger.info("Starting up application...")
     if settings.DATABASE_ENABLED:
         run_pending_migrations()
+        # Reconfigure logging after Alembic (which overrides logging config)
+        setup_logging(settings.LOG_LEVEL)
+        _logger = get_logger(__name__)  # Get fresh logger after reconfiguration
         try:
             await ApplicationSeeder().seed_data()
         except Exception as e:
-            logger.error(f"Seeding failed: {e}")
+            _logger.error(f"Seeding failed: {e}")
             raise SystemExit("Application startup aborted due to seeding failure.")
     
     # Initialize cache service
@@ -38,7 +42,7 @@ async def startup(app: FastAPI):
     app.state.cache_service = cache_service
     # Inject cache_service into the DI container
     app.container.cache_service.override(cache_service)
-    logger.info(f"Cache service initialized (type: {settings.CACHE_TYPE})")
+    _logger.info(f"Cache service initialized (type: {settings.CACHE_TYPE})")
     
     # Initialize and start the background scheduler
     scheduler_service = None
@@ -46,22 +50,24 @@ async def startup(app: FastAPI):
         scheduler_service = app.container.scheduler_service()
         register_all_jobs(scheduler_service)
         scheduler_service.start()
-        logger.info("Background scheduler started.")
+        _logger.info("Background scheduler started.")
+    
+    _logger.info("Application startup complete.")
     
     yield
 
     # Shutdown
-    logger.info("Shutting down application...")
+    _logger.info("Shutting down application...")
     
     # Shutdown cache service
     if hasattr(app.state, "cache_service"):
         await shutdown_cache_service(app.state.cache_service)
-        logger.info("Cache service shutdown.")
+        _logger.info("Cache service shutdown.")
     
     # Shutdown scheduler
     if scheduler_service:
         scheduler_service.shutdown()
-        logger.info("Background scheduler stopped.")
+        _logger.info("Background scheduler stopped.")
     
 app = FastAPI(
     title=f"Python FastAPI Boilerplate - {settings.ENV.capitalize()}",

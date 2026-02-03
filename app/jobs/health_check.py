@@ -6,9 +6,9 @@ Periodic health check to verify the scheduler is running properly.
 
 
 from datetime import datetime, timezone
-import logging
+from app.core.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def health_check_job() -> None:

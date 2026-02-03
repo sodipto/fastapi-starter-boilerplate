@@ -48,7 +48,6 @@ class SchedulerService(ISchedulerService):
             timezone='UTC'
         )
         self._is_running = False
-        logger.info("SchedulerService initialized")
 
     def _parse_cron_expression(self, cron_expression: str) -> dict:
         """
@@ -188,7 +187,6 @@ class SchedulerService(ISchedulerService):
         if not self._is_running:
             self._scheduler.start()
             self._is_running = True
-            logger.info("Scheduler started")
 
     def shutdown(self) -> None:
         """Shutdown the scheduler gracefully."""

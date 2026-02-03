@@ -28,16 +28,7 @@ class UserRepository(BaseRepository[User], IUserRepository):
         ).where(User.email == email.lower())
         result = await self.db.execute(query)
         user = result.scalars().first()
-
-        for user_role in user.roles or []:
-            print(f"User Role: {user_role.role.name}")
-        
-        # Map UserRole objects to role objects for easier access
-        # if user and user.roles:
-        #     user.roles = [ur.role for ur in user.roles if ur.role]
-        # else:
-        #     user.roles = [] if user else None
-            
+   
         return user
 
     async def get_by_id_with_roles(self, id: uuid.UUID) -> User | None:

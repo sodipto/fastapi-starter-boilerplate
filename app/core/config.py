@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     DATABASE_ENABLED: bool = False
     BACKGROUND_JOBS_ENABLED: bool = False
     
+    # Logging settings
+    LOG_LEVEL: str = "INFO"  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    
     # Token expiration settings
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7

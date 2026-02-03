@@ -17,9 +17,10 @@ Examples:
 import logging
 from typing import Any, Callable, TypedDict
 
+from app.core.logger import get_logger
 from app.jobs.health_check import health_check_job
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class CronJobConfig(TypedDict):
     """Configuration for a cron-based job."""
@@ -59,6 +60,5 @@ def register_all_jobs(scheduler_service) -> None:
                     func=job_config["func"],
                     cron_expression=job_config["cron_expression"]
                 )
-                logger.info(f"Registered job: {job_config['job_id']}")
             except Exception as e:
                 logger.error(f"Failed to register job {job_config['job_id']}: {e}")

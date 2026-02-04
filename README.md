@@ -199,6 +199,8 @@ docker run -p 8000:8000 --env-file .env.production fastapi-boilerplate
 | Cache | [docs/CACHE.md](docs/CACHE.md) |
 | Background Jobs | [docs/BACKGROUND_JOBS.md](docs/BACKGROUND_JOBS.md) |
 | Logging | [docs/LOGGING.md](docs/LOGGING.md) |
+| Testing | [docs/TESTING.md](docs/TESTING.md) |
+| Package Management | [docs/PACKAGE_MANAGEMENT.md](docs/PACKAGE_MANAGEMENT.md) |
 
 ## License
 

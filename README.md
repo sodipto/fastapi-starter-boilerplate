@@ -1,257 +1,182 @@
-﻿# 🚀 Python FastAPI Starter Boilerplate
+﻿# FastAPI Starter Boilerplate
 
-A robust, production-ready FastAPI boilerplate designed for rapid API development with modern best practices, dependency injection, modular architecture, and comprehensive error handling.
+A production-ready FastAPI boilerplate with JWT authentication, role-based access control, multi-database support, and modular architecture.
 
-![FastAPI](https://img.shields.io/badge/FastAPI-0.116.1-009688?style=for-the-badge&logo=fastapi)
-![Python](https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0.41-red?style=for-the-badge&logo=sqlalchemy)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-blue?style=for-the-badge&logo=postgresql)
-![MSSQL](https://img.shields.io/badge/SQL_Server-Supported-red?style=for-the-badge&logo=microsoftsqlserver)
-![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=for-the-badge&logo=docker)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.116.1-009688?style=flat-square&logo=fastapi)
+![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-red?style=flat-square)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-blue?style=flat-square&logo=postgresql)
+![SQL Server](https://img.shields.io/badge/SQL_Server-Supported-red?style=flat-square&logo=microsoftsqlserver)
 
-## ✨ Features
+## Tech Stack
 
-- 🔐 **JWT Authentication** - Secure token-based authentication and support refresh token
-- 🏗️ **Dependency Injection** - Clean architecture with dependency-injector
-- 📊 **Multi-Database Support** - PostgreSQL and SQL Server with async SQLAlchemy 2.0
-- 🔄 **Database Migrations** - Alembic for schema management across all providers
-- 🛡️ **Error Handling** - Comprehensive exception middleware
-- 📝 **API Documentation** - Auto-generated Swagger/OpenAPI docs
-- 🐳 **Docker Support** - Containerized deployment ready
-- 🔧 **Environment Configuration** - Multi-environment setup
-- 🧪 **Modular Architecture** - Clean separation of concerns
-- 🔒 **Security** - Password hashing with bcrypt
-- ⚡ **Async/Await** - Full async support throughout
+- **Framework:** FastAPI with async/await
+- **Database:** PostgreSQL or SQL Server (async SQLAlchemy 2.0)
+- **Authentication:** JWT with refresh tokens
+- **Authorization:** Role-based access control (RBAC)
+- **Migrations:** Alembic
+- **DI Container:** dependency-injector
+- **Caching:** In-memory or Redis
+- **Email:** aiosmtplib with Jinja2 templates
+- **Background Jobs:** APScheduler
+- **Logging:** Structured logging with Seq support
 
-## 📁 Project Structure
-
-```
-python-fastapi-boilerplate/
-├── 📁 alembic/                          # Database migrations
-│   ├── 📄 env.py                        # Alembic environment configuration
-│   ├── 📄 README                        # Migration documentation
-│   ├── 📄 script.py.mako                # Migration template
-│   └── 📁 versions/                     # Migration files
-│       └── 📄 0541f9ea1a26_create_users_table.py
-│
-├── 📁 app/                              # Main application package
-│   ├── 📁 api/                          # API layer
-│   │   └── 📁 endpoints/                       # API version 1
-│   │       ├── 📁 v1/            # API endpoints
-│   │       │   ├── 📄 auth.py           # Authentication endpoints
-│   │       │   └── 📄 user.py           # User management endpoints
-│   │       └── 📄 routes.py             # Route aggregation
-│   │
-│   ├── 📁 core/                         # Core application components
-│   │   ├── 📄 config.py                 # Application configuration
-│   │   ├── 📄 container.py              # Dependency injection container
-│   │   ├── 📁 database/                 # Database layer
-│   │   │   ├── 📄 base.py               # Base database configuration
-│   │   │   ├── 📄 migrate.py            # Migration utilities
-│   │   │   ├── 📄 schema.py             # Database schema definitions
-│   │   │   └── 📄 session.py            # Database session management
-│   │   ├── 📄 identity.py               # Identity management
-│   │   ├── 📄 jwt_security.py           # JWT security utilities
-│   │   ├── 📁 middlewares/              # Custom middlewares
-│   │   │   ├── 📄 __init__.py
-│   │   │   ├── 📄 exception_middleware.py
-│   │   │   ├── 📄 validation_exception_handler.py
-│   │   │   └── 📄 validation_exception_middleware.py
-│   │   └── 📄 open_api.py               # OpenAPI customization
-│   │
-│   ├── 📄 main.py                       # Application entry point
-│   │
-│   ├── 📁 models/                       # SQLAlchemy models
-│   │   ├── 📄 __init__.py
-│   │   └── 📄 user.py                   # User model
-│   │
-│   ├── 📁 repositories/                 # Data access layer
-│   │   ├── 📄 __init__.py
-│   │   └── 📄 user_repository.py        # User data operations
-│   │
-│   ├── 📁 schema/                       # Pydantic schemas
-│   │   ├── 📄 __init__.py
-│   │   ├── 📁 request/                  # Request schemas
-│   │   │   └── 📁 auth/
-│   │   │       └── 📄 login_request.py
-│   │   └── 📁 response/                 # Response schemas
-│   │       └── 📄 error_schema.py
-│   │
-│   ├── 📁 services/                     # Business logic layer
-│   │   ├── 📄 __init__.py
-│   │   ├── 📄 auth_service.py           # Authentication business logic
-│   │   └── 📄 user_service.py           # User management business logic
-│   │
-│   └── 📁 utils/                        # Utility functions
-│       ├── 📄 auth_utils.py             # Authentication utilities
-│       └── 📄 exception_utils.py        # Exception handling utilities
-│
-├── 📄 alembic.ini                       # Alembic configuration
-├── 📄 command.txt                       # Development commands
-├── 📄 Dockerfile                        # Docker configuration
-├── 📄 requirements.txt                  # Python dependencies
-└── 📄 test_asyncpg.py                   # Database connection test
-```
-
-## 🏗️ Architecture Overview
-
-This boilerplate follows a **Clean Architecture** pattern with clear separation of concerns:
-
-### **Layers:**
-
-1. **API Layer** (`app/api/`) - HTTP endpoints and request/response handling
-2. **Service Layer** (`app/services/`) - Business logic and orchestration
-3. **Repository Layer** (`app/repositories/`) - Data access and persistence
-4. **Model Layer** (`app/models/`) - Database models and entities
-5. **Core Layer** (`app/core/`) - Configuration, DI container, and utilities
-
-### **Key Design Patterns:**
-
-- **Dependency Injection** - Using `dependency-injector` for clean dependency management
-- **Repository Pattern** - Abstracting data access logic
-- **Service Layer Pattern** - Centralizing business logic
-- **Middleware Pattern** - Cross-cutting concerns like error handling
-
-## 🚀 Quick Start
-
-### Prerequisites
+## Prerequisites
 
 - Python 3.11+
-- One of the supported databases:
-  - PostgreSQL 12+ (recommended)
-  - Microsoft SQL Server 2019+
-- Docker (optional)
+- PostgreSQL 12+ or SQL Server 2019+
+- Redis (optional, for distributed caching)
 
-### 1. Clone and Setup
+## Quick Start
+
+### 1. Clone and Install
 
 ```bash
-git clone <your-repo-url>
+git clone <repository-url>
 cd python-fastapi-boilerplate
-```
-
-### 2. Environment Configuration
-
-Create environment files for different environments:
-
-```bash
-# Development
-cp .env.development.example .env.development
-
-# Production
-cp .env.production.example .env.production
-```
-
-Example `.env.development`:
-```env
-ENV=development
-DATABASE_PROVIDER=postgresql
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/fastapi_boilerplate
-SECRET_KEY=your-super-secret-key-here
-```
-
-**For other databases, see [DATABASE_PROVIDERS.md](DATABASE_PROVIDERS.md) for detailed configuration.**
-
-### 3. Install Dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 4. Database Setup
+### 2. Configure Environment
+
+Copy the example environment file and update values:
 
 ```bash
-# Run migrations
+cp .env.development .env.development
+```
+
+Minimum required settings:
+
+```env
+ENV=development
+DATABASE_ENABLED=True
+DATABASE_PROVIDER=postgresql
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/your_database
+SECRET_KEY=your-secret-key-min-32-characters
+```
+
+### 3. Run Migrations
+
+```bash
 alembic upgrade head
-
-# Or run migrations programmatically (handled in main.py)
 ```
 
-### 5. Run the Application
+### 4. Start the Server
 
 ```bash
-# Development
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Production
-uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### 6. Access Documentation
+### 5. Access API Documentation
 
-- **Swagger UI**: http://localhost:8000/swagger
-- **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI JSON**: http://localhost:8000/openapi.json
+| Interface | URL |
+|-----------|-----|
+| Swagger UI | http://localhost:8000/swagger |
+| ReDoc | http://localhost:8000/redoc |
+| OpenAPI JSON | http://localhost:8000/openapi.json |
 
-### 7. Health Check
-
-The application provides a health check endpoint for monitoring and container orchestration:
-
-- **Endpoint**: `GET /health`
-- **Response**: `{"status": "healthy"}`
-
-> **Note**: This endpoint is excluded from Swagger documentation.
-
-## 🐳 Docker Deployment
-
-### Build and Run with Docker
-
-```bash
-# Build the image
-docker build -t fastapi-starter-boilerplate .
-
-# Run the container
-docker run -p 8000:8000 --env-file .env.development fastapi-starter-boilerplate
-```
-
-## 🔧 Configuration
-
-### Environment Variables
+## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ENV` | Environment (development/production) | `development` |
-| `DATABASE_PROVIDER` | Database type (postgresql/mssql) | `postgresql` |
-| `DATABASE_URL` | Database connection string | Required |
-| `SECRET_KEY` | JWT secret key | Required |
+| `ENV` | Environment name | `development` |
+| `DATABASE_ENABLED` | Enable database | `False` |
+| `DATABASE_PROVIDER` | `postgresql` or `mssql` | `postgresql` |
+| `DATABASE_URL` | Database connection string | — |
+| `SECRET_KEY` | JWT signing key | — |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token TTL | `15` |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | Refresh token TTL | `7` |
+| `REQUIRE_EMAIL_CONFIRMED_ACCOUNT` | Require email verification | `True` |
+| `FRONTEND_URL` | Frontend app URL for email links | `http://localhost:3000` |
+| `CACHE_TYPE` | `memory` or `redis` | `memory` |
+| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
+| `BACKGROUND_JOBS_ENABLED` | Enable scheduled jobs | `False` |
+| `LOG_LEVEL` | Logging level | `INFO` |
+| `SEQ_ENABLED` | Enable Seq logging | `False` |
 
-### Database Configuration
+See `.env.development` for the full list of configuration options.
 
-The application supports **PostgreSQL** and **Microsoft SQL Server** with async SQLAlchemy 2.0.
-
-**Quick Start Examples:**
-
-```bash
-# PostgreSQL (default)
-DATABASE_PROVIDER=postgresql
-DATABASE_URL=postgresql+asyncpg://username:password@localhost:5432/database_name
-
-# Microsoft SQL Server
-DATABASE_PROVIDER=mssql
-DATABASE_URL=mssql+aioodbc://username:password@localhost:1433/database_name?driver=ODBC+Driver+17+for+SQL+Server
-```
-
-**📖 For comprehensive database setup guides, troubleshooting, and advanced configuration, see [DATABASE_PROVIDERS.md](DATABASE_PROVIDERS.md)**
-
-## 🛠️ Development
-
-### Adding New Endpoints
-
-1. **Create endpoint file** in `app/api/v1/endpoints/`
-2. **Add to routes** in `app/api/v1/routes.py`
-3. **Create schemas** in `app/schema/`
-4. **Add service methods** in `app/services/`
-5. **Update container** in `app/core/container.py`
-
-### Database Migrations
+## Commands
 
 ```bash
-# Create new migration
+# Development server
+uvicorn app.main:app --reload
+
+# Production server
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Create migration
 alembic revision --autogenerate -m "migration_name"
 
-# Apply migrations for update database
+# Apply migrations
 alembic upgrade head
 
-# Rollback migration
+# Rollback last migration
 alembic downgrade -1
+
+# View migration history
+alembic history
 ```
-**Built with ❤️ using FastAPI and modern Python practices**
+
+## Project Structure
+
+```
+├── app/
+│   ├── api/endpoints/       # API route handlers
+│   ├── core/                # Configuration, DI, middleware, RBAC
+│   ├── models/              # SQLAlchemy models
+│   ├── repositories/        # Data access layer
+│   ├── schema/              # Pydantic request/response schemas
+│   ├── services/            # Business logic
+│   ├── templates/emails/    # Jinja2 email templates
+│   ├── jobs/                # Background job definitions
+│   └── utils/               # Utilities and helpers
+├── alembic/                 # Database migrations
+├── docs/                    # Extended documentation
+└── requirements.txt
+```
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/auth/signup` | Register new user |
+| POST | `/api/v1/auth/login` | Authenticate user |
+| POST | `/api/v1/auth/refresh-token` | Refresh access token |
+| POST | `/api/v1/auth/confirm-email` | Confirm email address |
+| POST | `/api/v1/auth/resend-confirmation` | Resend confirmation email |
+| POST | `/api/v1/auth/forgot-password` | Request password reset |
+| POST | `/api/v1/auth/reset-password` | Reset password |
+
+### Users, Roles, Profile
+
+See Swagger UI for complete endpoint documentation.
+
+## Docker
+
+```bash
+# Build image
+docker build -t fastapi-boilerplate .
+
+# Run container
+docker run -p 8000:8000 --env-file .env.production fastapi-boilerplate
+```
+
+## Documentation
+
+| Topic | File |
+|-------|------|
+| Architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Authentication | [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) |
+| Database | [docs/DATABASE.md](docs/DATABASE.md) |
+| RBAC | [docs/RBAC.md](docs/RBAC.md) |
+| Email Service | [docs/EMAIL_SERVICE.md](docs/EMAIL_SERVICE.md) |
+| Cache | [docs/CACHE.md](docs/CACHE.md) |
+| Background Jobs | [docs/BACKGROUND_JOBS.md](docs/BACKGROUND_JOBS.md) |
+| Logging | [docs/LOGGING.md](docs/LOGGING.md) |
+
+## License
+
+This project is open source and available under the MIT License.

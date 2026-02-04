@@ -126,7 +126,7 @@ class PermissionChecker:
                 detail = f"Permission denied. Required all of: {', '.join(self.required_permissions)}"
             else:
                 detail = f"Permission denied. Required any of: {', '.join(self.required_permissions)}"
-            raise ForbiddenException("permission", detail)
+            raise ForbiddenException("permission", "you do not have the required permission.")
         
         # Return user_id so it can be used by the route if needed
         return user_id
@@ -245,7 +245,7 @@ def create_permission_dependency(permission: PermissionDefinition) -> Callable:
         )
         
         if not has_perm:
-            raise ForbiddenException("permission", f"Permission denied. Required: {permission.name}")
+            raise ForbiddenException("permission", "You do not have the required permission.")
         
         return user_id
     

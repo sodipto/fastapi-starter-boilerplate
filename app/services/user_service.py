@@ -172,7 +172,7 @@ class UserService(IUserService):
             full_name=signup_request.full_name,
             phone_number=signup_request.phone_number,
             password=get_password_hash(signup_request.password),
-            is_active=False,
+            is_active=not settings.REQUIRE_EMAIL_CONFIRMED_ACCOUNT,
             email_confirmed=False,
         )
 

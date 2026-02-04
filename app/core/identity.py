@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.params import Depends
 from pydantic import ValidationError
 from app.core.jwt_security import JWTBearer
@@ -43,3 +43,22 @@ def get_current_user(token: str = Depends(JWTBearer())
         raise HTTPException(status_code=404, detail="User not found!")
     
     return user_id
+
+
+def extract_user_id_from_request(request: Request) -> str:
+    """Return the user_id stored in the Authorization header, or 'Anonymous'."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return "Anonymous"
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=ALGORITHM)
+    except (JWTError, ValueError):
+        return "Anonymous"
+    user_id = payload.get("user_id")
+    if isinstance(user_id, str):
+        try:
+            user_id = UUID(user_id)
+        except ValueError:
+            return "Anonymous"
+    return str(user_id) if user_id else "Anonymous"

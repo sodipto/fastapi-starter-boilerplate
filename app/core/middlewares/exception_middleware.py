@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from app.schema.response.error import ErrorBody, ErrorResponse
 from app.utils.exception_utils import BadRequestException, ConflictException, ForbiddenException, NotFoundException, UnauthorizedException
 from app.core.logger import get_logger
-from app.core.jwt_security import decode_jwt
+from app.core.identity import extract_user_id_from_request
 try:
     from seqlog.structured_logging import StructuredLogger
 except ImportError:
@@ -18,20 +18,6 @@ logger = get_logger(__name__)
 
 
 class CustomExceptionMiddleware(BaseHTTPMiddleware):
-    
-    def _extract_user_id(self, request: Request) -> str:
-        """Extract user_id from JWT token if available."""
-        try:
-            auth_header = request.headers.get("Authorization")
-            if auth_header and auth_header.startswith("Bearer "):
-                token = auth_header.split(" ")[1]
-                payload = decode_jwt(token)
-                if payload:
-                    user_id = payload.get("user_id")
-                    return str(user_id) if user_id else "Anonymous"
-        except Exception:
-            pass
-        return "Anonymous"
     
     def _log_error(self, log_id: str, user_id: str, error_type: str, status_code: int, 
                    error_response: ErrorResponse, request: Request, stack_trace: str = None):
@@ -73,7 +59,7 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
             
         except (BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException, ConflictException) as e:
             log_id = str(uuid.uuid4())
-            user_id = self._extract_user_id(request)
+            user_id = extract_user_id_from_request(request)
             
             error_response = ErrorResponse(
                 error=ErrorBody(
@@ -93,7 +79,7 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
             
         except Exception as e:
             log_id = str(uuid.uuid4())
-            user_id = self._extract_user_id(request)
+            user_id = extract_user_id_from_request(request)
             stack_trace = traceback.format_exc()
             
             error_response = ErrorResponse(

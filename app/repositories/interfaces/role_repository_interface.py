@@ -10,7 +10,7 @@ class IRoleRepository(IBaseRepository[Role]):
     """Interface for role repository operations."""
 
     @abstractmethod
-    async def get_by_name(self, name: str) -> Role | None:
+    async def get_by_normalized_name(self, name: str) -> Role | None:
         """Get role by normalized name."""
         pass
 

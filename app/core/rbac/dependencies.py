@@ -31,7 +31,8 @@ Usage Examples:
 
 from typing import Callable, TYPE_CHECKING
 from uuid import UUID
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, status
+from app.utils.exception_utils import ForbiddenException
 
 from app.core.identity import get_current_user
 from app.core.rbac.permission_definition import PermissionDefinition
@@ -125,11 +126,7 @@ class PermissionChecker:
                 detail = f"Permission denied. Required all of: {', '.join(self.required_permissions)}"
             else:
                 detail = f"Permission denied. Required any of: {', '.join(self.required_permissions)}"
-            
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=detail
-            )
+            raise ForbiddenException("permission", detail)
         
         # Return user_id so it can be used by the route if needed
         return user_id
@@ -248,10 +245,7 @@ def create_permission_dependency(permission: PermissionDefinition) -> Callable:
         )
         
         if not has_perm:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission denied. Required: {permission.name}"
-            )
+            raise ForbiddenException("permission", f"Permission denied. Required: {permission.name}")
         
         return user_id
     

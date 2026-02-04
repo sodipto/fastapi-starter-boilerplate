@@ -4,12 +4,17 @@ from dependency_injector.wiring import inject, Provide
 
 from app.core.container import Container
 from app.schema.request.auth.login import LoginRequest
+from app.schema.request.auth.signup import SignupRequest
+from app.schema.request.auth.confirm_email import ConfirmEmailRequest
+from app.schema.request.auth.resend_confirmation import ResendConfirmationRequest
 from app.schema.request.auth.refresh_token import TokenRefreshRequest
 from app.schema.request.auth.forgot_password import ForgotPasswordRequest
 from app.schema.request.auth.reset_password import ResetPasswordRequest
 from app.schema.response.auth import AuthResponse
 from app.schema.response.meta import ResponseMeta
 from app.services.interfaces.auth_service_interface import IAuthService
+from app.services.interfaces.user_service_interface import IUserService
+from app.schema.response.meta import ResponseMeta
 
 router = APIRouter(
     prefix="/auth",
@@ -66,6 +71,34 @@ async def forgot_password(
     - **message**: Confirmation that the verification code was sent
     """
     return await auth_service.forgot_password(payload.email)
+
+
+@router.post("/signup", summary="Create a new user account", response_model=ResponseMeta)
+@inject
+async def signup(
+    payload: SignupRequest,
+    user_service: IUserService = Depends(Provide[Container.user_service])
+):
+    """Register a new user and send confirmation email."""
+    return await user_service.signup(payload)
+
+
+@router.post("/confirm-email", summary="Confirm email address", response_model=ResponseMeta)
+@inject
+async def confirm_email(
+    payload: ConfirmEmailRequest,
+    user_service: IUserService = Depends(Provide[Container.user_service])
+):
+    return await user_service.confirm_email(payload.email, payload.verification_code)
+
+
+@router.post("/resend-confirmation", summary="Resend email confirmation", response_model=ResponseMeta)
+@inject
+async def resend_confirmation(
+    payload: ResendConfirmationRequest,
+    user_service: IUserService = Depends(Provide[Container.user_service])
+):
+    return await user_service.resend_confirmation(payload.email)
 
 
 @router.post("/reset-password", summary="Reset password using verification code", response_model=ResponseMeta)

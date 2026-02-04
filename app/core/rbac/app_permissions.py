@@ -189,3 +189,11 @@ class AppPermissions:
             cls.DOCUMENTS_UPDATE,
             cls.DOCUMENTS_DELETE,
         ]
+    
+    @classmethod
+    def customer(cls) -> list[PermissionDefinition]:
+        """Get permissions for Customer role."""
+        return [
+            # Documents - view and upload only
+            cls.DOCUMENTS_UPLOAD,
+        ]

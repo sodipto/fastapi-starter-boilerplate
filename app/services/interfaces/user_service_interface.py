@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import uuid
 
 from app.schema.request.identity.user import UserRequest, UserUpdateRequest
+from app.schema.request.auth.signup import SignupRequest
+from app.schema.response.meta import ResponseMeta
 from app.schema.response.user import UserResponse, UserSearchResponse, UserRoleResponse
 from app.schema.response.pagination import PagedData
 
@@ -29,6 +31,21 @@ class IUserService(ABC):
     @abstractmethod
     async def create(self, user_request: UserRequest) -> UserResponse:
         """Create a new user."""
+        pass
+
+    @abstractmethod
+    async def signup(self, user_request: SignupRequest) -> ResponseMeta:
+        """Register a new user and send email confirmation."""
+        pass
+
+    @abstractmethod
+    async def confirm_email(self, email: str, verification_code: str) -> ResponseMeta:
+        """Confirm user's email using verification code."""
+        pass
+
+    @abstractmethod
+    async def resend_confirmation(self, email: str) -> ResponseMeta:
+        """Resend email confirmation verification code."""
         pass
 
     @abstractmethod

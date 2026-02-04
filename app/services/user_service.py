@@ -6,18 +6,27 @@ from app.models.user import User
 from app.models.user_role import UserRole
 from app.repositories.interfaces.user_repository_interface import IUserRepository
 from app.repositories.interfaces.role_repository_interface import IRoleRepository
+from app.services.interfaces import IEmailService, IEmailTemplateService
+from app.schema.response.meta import ResponseMeta
+from app.core.config import settings
+from datetime import datetime, timezone, timedelta
+import uuid
 from app.schema.request.identity.user import UserRequest, UserUpdateRequest
+from app.schema.request.auth.signup import SignupRequest
+from app.core.rbac import AppRoles
 from app.schema.response.user import UserResponse, UserRoleResponse, UserSearchResponse
 from app.schema.response.pagination import PagedData, create_paged_response
 from app.services.interfaces import IUserService
-from app.utils.exception_utils import NotFoundException, ConflictException
+from app.utils.exception_utils import NotFoundException, ConflictException, BadRequestException
 from app.utils.auth_utils import get_password_hash
 
 
 class UserService(IUserService):
-    def __init__(self, user_repository: IUserRepository, role_repository: IRoleRepository):
+    def __init__(self, user_repository: IUserRepository, role_repository: IRoleRepository, email_service: IEmailService, email_template_service: IEmailTemplateService):
         self.user_repository = user_repository
         self.role_repository = role_repository
+        self.email_service = email_service
+        self.email_template_service = email_template_service
 
     def _to_response(self, user: User) -> UserResponse:
         """Convert User model to UserResponse."""
@@ -139,6 +148,105 @@ class UserService(IUserService):
         created_user = await self.user_repository.get_by_id_with_roles(created_user.id)
         
         return self._to_response(created_user)
+
+    async def signup(self, signup_request: SignupRequest) -> ResponseMeta:
+        """Create user, assign CUSTOMER role and send email confirmation."""
+        # Check if email already exists
+        existing_user = await self.user_repository.get_by_email(signup_request.email)
+        if existing_user:
+            raise ConflictException(
+                "email",
+                f"User with email '{signup_request.email}' already exists"
+            )
+        
+        role = await self.role_repository.get_by_name(AppRoles.CUSTOMER)
+        if not role:
+            raise NotFoundException(
+                "role",
+                f"System role '{AppRoles.CUSTOMER}' not found. Please seed system roles."
+            )
+
+        # Create user model
+        user = User(
+            email=signup_request.email,
+            full_name=signup_request.full_name,
+            phone_number=signup_request.phone_number,
+            password=get_password_hash(signup_request.password),
+            is_active=False,
+            email_confirmed=False,
+        )
+
+        created_user = await self.user_repository.create(user)
+
+        # Assign system role CUSTOMER (required)
+        await self.user_repository.assign_roles(created_user.id, [role.id])
+
+        # If email confirmation is required, generate code and send email
+        if settings.REQUIRE_EMAIL_CONFIRMED_ACCOUNT:
+            await self._generate_verification_and_send_email(created_user)
+            return ResponseMeta(message="Signup successful. Confirmation email sent.")
+
+        return ResponseMeta(message="Signup successful.")
+
+    async def confirm_email(self, email: str, verification_code: str) -> ResponseMeta:
+        user = await self.user_repository.get_by_email(email)
+        if not user:
+            raise NotFoundException("email", f"User not found with this email: {email}")
+
+        if not user.email_verification_code:
+            raise BadRequestException(
+                "verification_code",
+                "No confirmation request found. Please request a new confirmation email."
+            )
+
+        if str(user.email_verification_code) != verification_code:
+            raise BadRequestException(
+                "verification_code",
+                "Invalid verification code!"
+            )
+
+        if user.email_verification_code_expiry_time < datetime.now(timezone.utc):
+            raise BadRequestException(
+                "verification_code",
+                "Verification code has expired. Please request a new one."
+            )
+
+        user.is_active = True
+        user.email_confirmed = True
+        user.email_verification_code = None
+        user.email_verification_code_expiry_time = None
+        await self.user_repository.update(user)
+
+        return ResponseMeta(message="Email confirmed successfully.")
+
+    async def resend_confirmation(self, email: str) -> ResponseMeta:
+        user = await self.user_repository.get_by_email(email)
+        if not user:
+            raise NotFoundException("email", f"User not found with this email: {email}")
+
+        if user.email_confirmed:
+            return ResponseMeta(message="Email already confirmed.")
+        await self._generate_verification_and_send_email(user)
+        return ResponseMeta(message="Confirmation email resent.")
+
+    async def _generate_verification_and_send_email(self, user: User) -> None:
+        """Generate verification code, persist it, and send confirmation email."""
+        verification_code = uuid.uuid4()
+        expiry_time = datetime.now(timezone.utc) + timedelta(minutes=settings.EMAIL_VERIFICATION_CODE_EXPIRE_MINUTES)
+        user.email_verification_code = verification_code
+        user.email_verification_code_expiry_time = expiry_time
+        await self.user_repository.update(user)
+
+        confirm_link = f"{settings.FRONTEND_URL}/confirm-email?code={verification_code}&email={user.email}"
+        body = self.email_template_service.render(
+            "confirm_email.html",
+            {"full_name": user.full_name, "confirm_link": confirm_link, "expiry_minutes": settings.EMAIL_VERIFICATION_CODE_EXPIRE_MINUTES},
+        )
+        await self.email_service.send_email_async(
+            subject="Confirm your email",
+            body=body,
+            receivers={user.email: user.full_name},
+        )
 
     async def update(self, user_id: uuid.UUID, user_request: UserUpdateRequest) -> UserResponse:
         """Update an existing user."""

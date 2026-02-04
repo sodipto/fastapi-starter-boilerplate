@@ -35,7 +35,7 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
         )
         return list(result.scalars().all())
         
-    async def get_by_name(self, name: str) -> Role | None:
+    async def get_by_normalized_name(self, name: str) -> Role | None:
         """Get role by normalized name."""
         normalized_name = name.upper()
         result = await self.db.execute(

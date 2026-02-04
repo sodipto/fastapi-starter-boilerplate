@@ -133,6 +133,10 @@ class ApplicationSeeder:
                 await self.assign_permissions_to_role(
                     session, role, AppPermissions.admin()
                 )
+            elif system_role.normalized_name == AppRoles.CUSTOMER:
+                await self.assign_permissions_to_role(
+                    session, role, AppPermissions.customer()
+                )
         
         await session.commit()
         self.logger.info("System roles seeded with permissions.")

@@ -32,6 +32,7 @@ class AppRoles:
     # Role name constants
     SUPER_ADMIN = "SUPER_ADMIN"
     ADMIN = "ADMIN"
+    CUSTOMER = "CUSTOMER"
     
     # System role definitions
     _system_roles: list[ApplicationSystemRole] = [
@@ -45,6 +46,12 @@ class AppRoles:
             name="Admin",
             normalized_name=ADMIN,
             description="Administrator role with management permissions",
+            is_editable=False
+        ),
+        ApplicationSystemRole(
+            name="Customer",
+            normalized_name=CUSTOMER,
+            description="Customer role with limited permissions",
             is_editable=False
         ),
     ]

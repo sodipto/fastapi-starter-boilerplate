@@ -57,10 +57,21 @@ class Container(containers.DeclarativeContainer):
         TokenService
     )
 
+    email_service = providers.Factory(
+        EmailService,
+        db=db_session
+    )
+
+    email_template_service = providers.Singleton(
+        EmailTemplateService
+    )
+
     user_service = providers.Factory(
         UserService,
         user_repository=user_repository,
-        role_repository=role_repository
+        role_repository=role_repository,
+        email_service=email_service,
+        email_template_service=email_template_service
     )
 
     profile_service = providers.Factory(

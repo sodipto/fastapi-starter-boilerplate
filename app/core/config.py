@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     # Account settings
     REQUIRE_EMAIL_CONFIRMED_ACCOUNT: bool = True
     FORGOT_PASSWORD_VERIFICATION_CODE_EXPIRE_MINUTES: int = 15
+    EMAIL_VERIFICATION_CODE_EXPIRE_MINUTES: int = 60
     FRONTEND_URL: str = "http://localhost:3000"  # Frontend application URL
 
     # Email settings

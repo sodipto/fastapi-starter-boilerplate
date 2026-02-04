@@ -161,7 +161,8 @@ class AuthService(IAuthService):
         # Check if user account is active
         if not user.is_active:
             raise BadRequestException(
-                message="Your account has been deactivated. Please contact support.",
+                "account",
+                "Your account has been deactivated. Please contact support.",
             )
         
         # Generate verification code (UUID)
@@ -210,19 +211,22 @@ class AuthService(IAuthService):
         # Check if verification code exists
         if not user.forgot_password_verification_code:
             raise BadRequestException(
-                message="No password reset request found. Please request a new verification code.",
+                "verification_code",
+                "No password reset request found. Please request a new verification code.",
             )
         
         # Verify the code matches
         if str(user.forgot_password_verification_code) != verification_code:
             raise BadRequestException(
-                message="Invalid verification code!",
+                "verification_code",
+                "Invalid verification code!",
             )
         
         # Check if verification code is expired
         if user.forgot_password_verification_code_expiry_time < datetime.now(timezone.utc):
             raise BadRequestException(
-                message="Verification code has expired. Please request a new one.",
+                "verification_code",
+                "Verification code has expired. Please request a new one.",
             )
         
         # Hash new password

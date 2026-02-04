@@ -29,17 +29,38 @@ A production-ready FastAPI boilerplate with JWT authentication, role-based acces
 
 ## Quick Start
 
-### 1. Clone and Install
+### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/sodipto/python-fastapi-boilerplate.git
 cd python-fastapi-boilerplate
+```
+
+### 2. Create Virtual Environment
+
+**Windows:**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+**Linux/macOS:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+### 4. Configure Environment
 
-Copy the example environment file and update values:
+Copy and edit the environment file:
 
 ```bash
 cp .env.development .env.development
@@ -55,19 +76,19 @@ DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/your_database
 SECRET_KEY=your-secret-key-min-32-characters
 ```
 
-### 3. Run Migrations
+### 5. Run Migrations
 
 ```bash
 alembic upgrade head
 ```
 
-### 4. Start the Server
+### 6. Start the Server
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 5. Access API Documentation
+### 7. Access API Documentation
 
 | Interface | URL |
 |-----------|-----|
@@ -179,4 +200,7 @@ docker run -p 8000:8000 --env-file .env.production fastapi-boilerplate
 
 ## License
 
-This project is open source and available under the MIT License.
+This project is open source and released under the MIT License.  
+Developed and maintained by Sodipto Saha.
+
+Copyright (c) 2026 Sodipto Saha

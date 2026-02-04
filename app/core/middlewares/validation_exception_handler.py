@@ -7,7 +7,12 @@ from app.schema.response.error import ErrorBody, ErrorResponse
 async def custom_validation_exception_handler(request: Request, exc: RequestValidationError):
     messages = {}
     for err in exc.errors():
-        loc = ".".join(str(l) for l in err.get("loc", []))
+        loc_parts = err.get("loc", [])
+        loc = ".".join(str(l) for l in loc_parts)
+        if not loc:
+            # fallback to error type (e.g. passwords_mismatch). If type contains dots, take last segment.
+            err_type = err.get("type", "error")
+            loc = str(err_type).split(".")[-1]
         messages[loc] = err.get("msg", "")
     error_body = ErrorBody(
         logId=str(uuid.uuid4()),

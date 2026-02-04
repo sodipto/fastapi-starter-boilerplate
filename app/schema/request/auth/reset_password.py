@@ -8,8 +8,26 @@ from app.core.constants.validation import EMAIL_REGEX
 class ResetPasswordRequest(BaseModel):
     email: str = Field(description="Email address associated with the account")
     verification_code: str = Field(description="Verification code sent to email")
-    new_password: Annotated[str, Field(min_length=8, description="New password (minimum 8 characters)")]
-    confirm_password: Annotated[str, Field(min_length=8, description="Confirm new password")]
+    new_password: Annotated[str, Field(description="New password (minimum 8 characters)")]
+    confirm_password: Annotated[str, Field(description="Confirm new password")]
+
+    @field_validator("new_password")
+    def check_new_password_length(cls, value: str):
+        if not value or len(value) < 8:
+            raise PydanticCustomError(
+                "password_too_short",
+                "new_password must be at least 8 characters",
+            )
+        return value
+
+    @field_validator("confirm_password")
+    def check_confirm_password_length(cls, value: str):
+        if not value or len(value) < 8:
+            raise PydanticCustomError(
+                "password_too_short",
+                "confirm_password must be at least 8 characters",
+            )
+        return value
 
     @field_validator("email")
     def check_email_format(cls, value):

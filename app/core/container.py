@@ -5,6 +5,7 @@ from app.services.token_service import TokenService
 from app.services.role_service import RoleService
 from app.services.permission_service import PermissionService
 from app.services.AWS_s3_document_storage_service import AwsS3DocumentStorageService
+from app.services.email_template_service import EmailTemplateService
 from app.repositories import UserRepository, EmailLogRepository
 from app.repositories.role_repository import RoleRepository
 from app.repositories.permission_repository import PermissionRepository
@@ -84,12 +85,17 @@ class Container(containers.DeclarativeContainer):
         db=db_session
     )
 
+    email_template_service = providers.Singleton(
+        EmailTemplateService
+    )
+
     auth_service = providers.Factory(
         AuthService,
         user_repository=user_repository,
         token_service=token_service,
         cache_service=cache_service,
-        email_service=email_service
+        email_service=email_service,
+        email_template_service=email_template_service
     )
 
     document_storage_service = providers.Singleton(

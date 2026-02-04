@@ -6,6 +6,7 @@ from app.models import role, user_role
 from app.repositories.interfaces.user_repository_interface import IUserRepository
 from app.schema.response.meta import ResponseMeta
 from app.services.interfaces import IAuthService, ITokenService, ICacheService, IEmailService
+from app.services.interfaces import IEmailTemplateService
 from app.utils.auth_utils import get_password_hash, verify_password
 from app.utils.exception_utils import NotFoundException, UnauthorizedException, BadRequestException
 from app.schema.response.auth import AuthResponse
@@ -20,11 +21,14 @@ class AuthService(IAuthService):
         token_service: ITokenService,
         cache_service: ICacheService,
         email_service: IEmailService
+        ,
+        email_template_service: IEmailTemplateService
     ):
         self.user_repository = user_repository
         self.token_service = token_service
         self.cache_service = cache_service
         self.email_service = email_service
+        self.email_template_service = email_template_service
 
     async def login(self, email: str, password: str) -> AuthResponse:
         # Verify user exists
@@ -173,21 +177,22 @@ class AuthService(IAuthService):
         
         # Generate password reset link
         reset_link = f"{settings.FRONTEND_URL}/reset-password?code={verification_code}&email={user.email}"
-        
-        # Send email with reset link
-        await self.email_service.send_email(
-            to_email=user.email,
+
+        # Render email template
+        body = self.email_template_service.render(
+            "reset_password.html",
+            {
+                "full_name": user.full_name,
+                "reset_link": reset_link,
+                "expiry_minutes": settings.FORGOT_PASSWORD_VERIFICATION_CODE_EXPIRE_MINUTES,
+            },
+        )
+
+        # Send email with rendered HTML body
+        await self.email_service.send_email_async(
             subject="Password Reset Request",
-            body=f"""
-            <h2>Password Reset Request</h2>
-            <p>Hello {user.full_name},</p>
-            <p>You have requested to reset your password. Please click the link below to reset your password:</p>
-            <p><a href="{reset_link}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
-            <p>Or copy and paste this link into your browser:</p>
-            <p>{reset_link}</p>
-            <p>This link will expire in {settings.FORGOT_PASSWORD_VERIFICATION_CODE_EXPIRE_MINUTES} minutes.</p>
-            <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
-            """
+            body=body,
+            receivers={user.email: user.full_name},
         )
         
         return ResponseMeta(message="Password reset verification code sent to your email")

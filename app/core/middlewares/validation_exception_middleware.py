@@ -46,6 +46,9 @@ def custom_validation_exception_middleware(request: Request, exc: RequestValidat
         if loc_parts and loc_parts[0] == "body":
             loc_parts = loc_parts[1:]  # remove 'body' prefix
         loc = ".".join(str(l) for l in loc_parts)
+        if not loc:
+            err_type = err.get("type", "error")
+            loc = str(err_type).split(".")[-1]
         messages[loc] = err.get("msg", "")  # use only the message, not the error type
 
     error_body = ErrorBody(

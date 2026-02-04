@@ -6,5 +6,6 @@ from .email_service_interface import IEmailService
 from .document_storage_service_interface import DocumentStorageServiceInterface
 from .scheduler_service_interface import ISchedulerService
 from .cache_service_interface import ICacheService
+from .email_template_service_interface import IEmailTemplateService
 
-__all__ = ["IAuthService", "ITokenService", "IUserService", "IRoleService", "IEmailService", "DocumentStorageServiceInterface", "ISchedulerService", "ICacheService"]
+__all__ = ["IAuthService", "ITokenService", "IUserService", "IRoleService", "IEmailService", "DocumentStorageServiceInterface", "ISchedulerService", "ICacheService", "IEmailTemplateService"]

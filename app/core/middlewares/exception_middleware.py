@@ -1,7 +1,6 @@
 import uuid
 import json
 import traceback
-import logging
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -10,6 +9,10 @@ from app.schema.response.error import ErrorBody, ErrorResponse
 from app.utils.exception_utils import BadRequestException, ConflictException, ForbiddenException, NotFoundException, UnauthorizedException
 from app.core.logger import get_logger
 from app.core.jwt_security import decode_jwt
+try:
+    from seqlog.structured_logging import StructuredLogger
+except ImportError:
+    StructuredLogger = None
 
 logger = get_logger(__name__)
 
@@ -32,7 +35,7 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
     
     def _log_error(self, log_id: str, user_id: str, error_type: str, status_code: int, 
                    error_response: ErrorResponse, request: Request, stack_trace: str = None):
-        """Log error with .NET template format and structured properties."""
+        """Log error with template and structured properties."""
         # Build formatted message for display
         error_info_str = json.dumps(error_response.model_dump(), indent=2)
         message_parts = [
@@ -40,40 +43,31 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
             f"LogId:{log_id}",
             f"Type:{error_type}",
             f"StatusCode:{status_code}",
+            f"Path:{request.method} {request.url.path}",
             f"ErrorInformation:{error_info_str}"
         ]
         
-        if stack_trace:
-            message_parts.append(f"StackTrace:{stack_trace}")
-        
         formatted_message = "\n".join(message_parts)
-        
-        # Create a custom LogRecord with additional attributes
-        record = logger.makeRecord(
-            name=logger.name,
-            level=logging.ERROR,
-            fn="",
-            lno=0,
-            msg=formatted_message,
-            args=(),
-            exc_info=None
-        )
-        
-        # Add custom properties as attributes on the LogRecord
-        record.UserId = user_id
-        record.LogId = log_id
-        record.Type = error_type
-        record.StatusCode = status_code
-        record.ErrorInfo = error_response.model_dump()
-        record.HttpMethod = request.method
-        record.Path = str(request.url.path)
-        record.ClientHost = request.client.host if request.client else None
+
+        # Structured properties for Seq (assuming support_extra_properties=True)
+        props = {
+            "UserId": user_id,
+            "LogId": log_id,
+            "Type": error_type,
+            "StatusCode": status_code,
+            "ErrorInfo": error_response.model_dump(),
+            "HttpMethod": request.method,
+            "Path": str(request.url.path),
+            "ClientHost": request.client.host if request.client else None
+        }
         
         if stack_trace:
-            record.StackTrace = stack_trace
+            props["StackTrace"] = stack_trace
         
-        # Handle the record
-        logger.handle(record)
+        if StructuredLogger and isinstance(logger, StructuredLogger):
+            logger.error(formatted_message, **props)
+        else:
+            logger.error(formatted_message, extra=props)
     
     async def dispatch(self, request: Request, call_next):
         try:

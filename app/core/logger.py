@@ -60,25 +60,30 @@ def setup_logging(log_level: str = "INFO", seq_server_url: str = None, seq_api_k
         datefmt="%Y-%m-%d %H:%M:%S"
     )
     console_handler.setFormatter(formatter)
-    root.addHandler(console_handler)
-    
-    # Configure Seq logging if enabled (add Seq handler alongside console)
+
+    seq_configured = False
     if seq_server_url and SEQ_AVAILABLE:
         try:
-            # Get Seq handler
-            seq_handler = seqlog.SeqLogHandler(
+            seqlog.log_to_seq(
                 server_url=seq_server_url,
                 api_key=seq_api_key if seq_api_key else None,
+                level=numeric_level,
                 batch_size=10,
-                auto_flush_timeout=2
+                auto_flush_timeout=2,
+                override_root_logger=False,
+                additional_handlers=[console_handler],
+                support_extra_properties=True,
+                support_stack_info=True
             )
-            seq_handler.setLevel(numeric_level)
-            root.addHandler(seq_handler)
+            seq_configured = True
             root.info(f"Seq logging enabled: {seq_server_url}")
         except Exception as e:
             root.warning(f"Failed to configure Seq logging: {e}")
     elif seq_server_url and not SEQ_AVAILABLE:
         root.warning("Seq logging requested but seqlog package not installed. Install with: pip install seqlog")
+
+    if not seq_configured:
+        root.addHandler(console_handler)
     
     # IMPORTANT: Re-enable the 'app' logger hierarchy (Alembic disables existing loggers)
     # This must re-enable all app.* loggers that were created before this function runs

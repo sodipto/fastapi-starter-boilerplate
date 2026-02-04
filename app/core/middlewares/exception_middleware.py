@@ -37,14 +37,11 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
                    error_response: ErrorResponse, request: Request, stack_trace: str = None):
         """Log error with template and structured properties."""
         # Build formatted message for display
-        error_info_str = json.dumps(error_response.model_dump(), indent=2)
+        messages_json = json.dumps(error_response.error.messages, indent=2)
         message_parts = [
-            f"UserId:{user_id}",
-            f"LogId:{log_id}",
-            f"Type:{error_type}",
-            f"StatusCode:{status_code}",
+            f"Type:{error_type}({status_code})",
             f"Path:{request.method} {request.url.path}",
-            f"ErrorInformation:{error_info_str}"
+            f"Error:{messages_json}"
         ]
         
         formatted_message = "\n".join(message_parts)
@@ -55,10 +52,10 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
             "LogId": log_id,
             "Type": error_type,
             "StatusCode": status_code,
-            "ErrorInfo": error_response.model_dump(),
+            "Error": messages_json,
             "HttpMethod": request.method,
             "Path": str(request.url.path),
-            "ClientHost": request.client.host if request.client else None
+            "Host": request.client.host if request.client else None
         }
         
         if stack_trace:

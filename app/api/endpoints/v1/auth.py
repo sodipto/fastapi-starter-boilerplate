@@ -23,7 +23,6 @@ async def login(
     payload: LoginRequest,
     auth_service: IAuthService = Depends(Provide[Container.auth_service])
 ):
-    a=1/0
     return await auth_service.login(payload.email, payload.password)
 
 

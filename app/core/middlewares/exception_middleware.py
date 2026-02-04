@@ -1,4 +1,7 @@
 import uuid
+import json
+import traceback
+import logging
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -6,16 +9,81 @@ from fastapi.responses import JSONResponse
 from app.schema.response.error import ErrorBody, ErrorResponse
 from app.utils.exception_utils import BadRequestException, ConflictException, ForbiddenException, NotFoundException, UnauthorizedException
 from app.core.logger import get_logger
+from app.core.jwt_security import decode_jwt
 
 logger = get_logger(__name__)
 
+
 class CustomExceptionMiddleware(BaseHTTPMiddleware):
+    
+    def _extract_user_id(self, request: Request) -> str:
+        """Extract user_id from JWT token if available."""
+        try:
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+                payload = decode_jwt(token)
+                if payload:
+                    user_id = payload.get("user_id")
+                    return str(user_id) if user_id else "Anonymous"
+        except Exception:
+            pass
+        return "Anonymous"
+    
+    def _log_error(self, log_id: str, user_id: str, error_type: str, status_code: int, 
+                   error_response: ErrorResponse, request: Request, stack_trace: str = None):
+        """Log error with .NET template format and structured properties."""
+        # Build formatted message for display
+        error_info_str = json.dumps(error_response.model_dump(), indent=2)
+        message_parts = [
+            f"UserId:{user_id}",
+            f"LogId:{log_id}",
+            f"Type:{error_type}",
+            f"StatusCode:{status_code}",
+            f"ErrorInformation:{error_info_str}"
+        ]
+        
+        if stack_trace:
+            message_parts.append(f"StackTrace:{stack_trace}")
+        
+        formatted_message = "\n".join(message_parts)
+        
+        # Create a custom LogRecord with additional attributes
+        record = logger.makeRecord(
+            name=logger.name,
+            level=logging.ERROR,
+            fn="",
+            lno=0,
+            msg=formatted_message,
+            args=(),
+            exc_info=None
+        )
+        
+        # Add custom properties as attributes on the LogRecord
+        record.UserId = user_id
+        record.LogId = log_id
+        record.Type = error_type
+        record.StatusCode = status_code
+        record.ErrorInfo = error_response.model_dump()
+        record.HttpMethod = request.method
+        record.Path = str(request.url.path)
+        record.ClientHost = request.client.host if request.client else None
+        
+        if stack_trace:
+            record.StackTrace = stack_trace
+        
+        # Handle the record
+        logger.handle(record)
+    
     async def dispatch(self, request: Request, call_next):
         try:
             response = await call_next(request)
             return response
-        except (BadRequestException, NotFoundException, UnauthorizedException,ForbiddenException, ConflictException) as e:
+            
+        except (BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException, ConflictException) as e:
             log_id = str(uuid.uuid4())
+            user_id = self._extract_user_id(request)
+            
             error_response = ErrorResponse(
                 error=ErrorBody(
                     logId=log_id,
@@ -25,18 +93,18 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
                 )
             )
             
-            # Log the custom exception
-            logger.error(
-                f"[LogID: {log_id}] {e.type} - Status: {e.status_code} - "
-                f"Path: {request.method} {request.url.path} - Messages: {e.messages}"
-            )
+            self._log_error(log_id, user_id, e.type, e.status_code, error_response, request)
             
             return JSONResponse(
                 status_code=e.status_code,
                 content=error_response.model_dump()
             )
+            
         except Exception as e:
             log_id = str(uuid.uuid4())
+            user_id = self._extract_user_id(request)
+            stack_trace = traceback.format_exc()
+            
             error_response = ErrorResponse(
                 error=ErrorBody(
                     logId=log_id,
@@ -46,11 +114,7 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
                 )
             )
             
-            # Log the unhandled exception with full traceback
-            logger.error(
-                f"[LogID: {log_id}] Unhandled exception - Path: {request.method} {request.url.path}",
-                exc_info=True
-            )
+            self._log_error(log_id, user_id, "InternalServerError", 500, error_response, request, stack_trace)
             
             return JSONResponse(
                 status_code=500,

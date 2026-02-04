@@ -6,7 +6,11 @@ from fastapi import FastAPI
 # Initialize logging BEFORE importing any application modules
 from app.core.config import settings
 from app.core.logger import setup_logging, get_logger
-setup_logging(settings.LOG_LEVEL)
+setup_logging(
+    log_level=settings.LOG_LEVEL,
+    seq_server_url=settings.SEQ_SERVER_URL if settings.SEQ_ENABLED else None,
+    seq_api_key=settings.SEQ_API_KEY if settings.SEQ_ENABLED and settings.SEQ_API_KEY else None
+)
 
 # Now import application modules (after logging is configured)
 from app.core.container import Container
@@ -29,7 +33,11 @@ async def startup(app: FastAPI):
     if settings.DATABASE_ENABLED:
         run_pending_migrations()
         # Reconfigure logging after Alembic (which overrides logging config)
-        setup_logging(settings.LOG_LEVEL)
+        setup_logging(
+            log_level=settings.LOG_LEVEL,
+            seq_server_url=settings.SEQ_SERVER_URL if settings.SEQ_ENABLED else None,
+            seq_api_key=settings.SEQ_API_KEY if settings.SEQ_ENABLED and settings.SEQ_API_KEY else None
+        )
         _logger = get_logger(__name__)  # Get fresh logger after reconfiguration
         try:
             await ApplicationSeeder().seed_data()

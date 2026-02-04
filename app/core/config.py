@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     # Cache settings
     CACHE_TYPE: str = "memory"  # Options: memory, redis
     REDIS_URL: str = "redis://localhost:6379"
+    
+    # Seq logging settings
+    SEQ_ENABLED: bool = False
+    SEQ_SERVER_URL: str = "http://localhost:5341"
+    SEQ_API_KEY: str = ""  # Optional: Seq API key for authentication
 
     model_config = SettingsConfigDict(
         env_file=f".env.{os.getenv('ENV', 'development')}",

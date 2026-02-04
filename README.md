@@ -190,9 +190,11 @@ docker run -p 8000:8000 --env-file .env.production fastapi-boilerplate
 | Topic | File |
 |-------|------|
 | Architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| REST API Conventions | [docs/REST_API_CONVENTIONS.md](docs/REST_API_CONVENTIONS.md) |
 | Authentication | [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) |
 | Database | [docs/DATABASE.md](docs/DATABASE.md) |
 | RBAC | [docs/RBAC.md](docs/RBAC.md) |
+| Exceptions | [docs/EXCEPTIONS.md](docs/EXCEPTIONS.md) |
 | Email Service | [docs/EMAIL_SERVICE.md](docs/EMAIL_SERVICE.md) |
 | Cache | [docs/CACHE.md](docs/CACHE.md) |
 | Background Jobs | [docs/BACKGROUND_JOBS.md](docs/BACKGROUND_JOBS.md) |

@@ -159,7 +159,7 @@ class UserService(IUserService):
                 f"User with email '{signup_request.email}' already exists"
             )
         
-        role = await self.role_repository.get_by_name(AppRoles.CUSTOMER)
+        role = await self.role_repository.get_by_normalized_name(AppRoles.CUSTOMER)
         if not role:
             raise NotFoundException(
                 "role",

@@ -1,0 +1,100 @@
+version: "3.8"
+
+services:
+  # ================================
+  # FastAPI Application
+  # ================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: fastapi-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fastapi-network
+  # ================================
+  # PostgreSQL Database
+  # ================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: fastapi-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=fastapi_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fastapi-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d fastapi_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ================================
+  # Redis Cache
+  # ================================
+  redis:
+    image: redis:7-alpine
+    container_name: fastapi-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - fastapi-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ================================
+  # Seq Logging Server
+  # ================================
+  seq:
+    image: datalust/seq:latest
+    container_name: fastapi-seq
+    restart: unless-stopped
+    ports:
+      - "5341:80" # Web UI and ingestion
+      - "5342:5341" # Ingestion API
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORDHASH=${SEQ_ADMIN_PASSWORD_HASH:-}
+    volumes:
+      - seq_data:/data
+    networks:
+      - fastapi-network
+
+# ================================
+# Networks
+# ================================
+networks:
+  fastapi-network:
+    driver: bridge
+
+# ================================
+# Volumes
+# ================================
+volumes:
+  postgres_data:
+  redis_data:
+  seq_data:

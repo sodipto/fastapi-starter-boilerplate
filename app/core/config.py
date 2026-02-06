@@ -55,4 +55,13 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8"
     )
 
+    # OpenAPI / Swagger settings
+    OPENAPI_TITLE: str = "Python FastAPI Boilerplate"
+    OPENAPI_DESCRIPTION: str = (
+        "A robust FastAPI boilerplate for rapid API development, featuring dependency "
+        "injection, modular routing, and environment-based configuration."
+    )
+    OPENAPI_VERSION: str = "1.0.0"
+    OPENAPI_ENABLED: bool = True
+
 settings = Settings()

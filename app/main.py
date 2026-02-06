@@ -77,16 +77,19 @@ async def startup(app: FastAPI):
         scheduler_service.shutdown()
         _logger.info("Background scheduler stopped.")
     
+
 app = FastAPI(
-    title=f"Python FastAPI Boilerplate - {settings.ENV.capitalize()}",
-    description="A robust FastAPI boilerplate for rapid API development, featuring dependency injection, modular routing, and environment-based configuration.",
-    version="1.0.0",
-    docs_url="/swagger",
-    redoc_url="/redoc",
+    title=f"{settings.OPENAPI_TITLE}",
+    description=settings.OPENAPI_DESCRIPTION,
+    version=settings.OPENAPI_VERSION,
+    docs_url="/swagger" if settings.OPENAPI_ENABLED else None,
+    redoc_url="/redoc" if settings.OPENAPI_ENABLED else None,
+    openapi_url="/openapi.json" if settings.OPENAPI_ENABLED else None,
     lifespan=startup,
 )
 
-app.openapi = lambda: custom_openapi(app)
+if settings.OPENAPI_ENABLED:
+    app.openapi = lambda: custom_openapi(app)
 container = Container() 
 container.init_resources()
 app.container = container

@@ -76,9 +76,9 @@ class UserService(IUserService):
         # Build query filters
         filters = []
         if email:
-            filters.append(User.email.ilike(f"%{email}%"))
+            filters.append(func.lower(User.email) == email.lower())
         if full_name:
-            filters.append(User.full_name.ilike(f"%{full_name}%"))
+            filters.append(User.full_name.ilike(f"{full_name}%"))
         if is_active is not None:
             filters.append(User.is_active == is_active)
         

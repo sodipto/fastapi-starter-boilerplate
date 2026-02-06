@@ -15,7 +15,7 @@ class Role(Base, AuditableEntity):
     name = Column(String(256), nullable=False)
     normalized_name = Column(String(256), nullable=False, index=True, unique=True)
     description = Column(String(500), nullable=True)
-    is_system = Column(Boolean, nullable=False, default=False)
+    is_system = Column(Boolean, nullable=False, default=False, index=True)
 
     role_claims = relationship(
         "RoleClaim",

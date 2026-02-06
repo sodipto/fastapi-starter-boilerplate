@@ -7,12 +7,13 @@ from app.core.database.base import Base
 from app.core.database.schema import DbSchemas
 from app.models.auditable_entity import AuditableEntity
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, Index
 
 class UserRole(Base, AuditableEntity):
     __tablename__ = "user_roles"
     __table_args__ = (
         UniqueConstraint("user_id", "role_id", name="uq_user_role"),
+        Index("ix_user_roles_role_id_user_id", "role_id", "user_id"),
         {"schema": DbSchemas.identity},
     )
 

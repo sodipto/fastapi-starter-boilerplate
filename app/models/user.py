@@ -19,7 +19,7 @@ class User(Base, AuditableEntity):
     refresh_token = Column(String(512), nullable=True)
     refresh_token_expiry_time = Column(DateTime(timezone=True), nullable=True)
     profile_image_url = Column(String(1024), nullable=True)
-    phone_number = Column(String(20), nullable=True)
+    phone_number = Column(String(20), nullable=True, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
     email_confirmed = Column(Boolean, default=False, nullable=False)
     email_verification_code = Column(GUID(), nullable=True)

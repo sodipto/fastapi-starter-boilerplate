@@ -21,5 +21,5 @@ class EmailLogger(Base, AuditableEntity):
     cc = Column(Text, nullable=True)  # Stored as JSON string
     bcc = Column(Text, nullable=True)  # Stored as JSON string
     total_email_sent = Column(Integer, nullable=False, default=0)
-    status = Column(EmailStatusType, nullable=False, default=EmailStatus.FAILED)
+    status = Column(EmailStatusType, nullable=False, default=EmailStatus.FAILED, index=True)
     error_message = Column(Text, nullable=True)

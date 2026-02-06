@@ -1,4 +1,26 @@
-from app.core.database.session import get_db
+"""
+Dependency Injection Container
+
+Production-grade DI container using declarative configuration pattern.
+All dependencies are defined upfront with proper lifecycle management.
+
+Key Design Principles:
+    1. Declarative Configuration: All providers defined at class level
+    2. No Runtime Overrides: Use Resource providers for async initialization
+    3. Lazy Resolution: Use providers.Dependency() for circular prevention
+    4. Testability: Override at container level, not runtime
+
+Cyclic Dependency Prevention:
+    - Services that may need each other use the ServiceMediator pattern
+    - Use providers.Dependency() for optional late-binding
+    - Singleton services are created once and shared
+"""
+from dependency_injector import containers, providers
+
+from app.core.database.session import async_session
+from app.repositories import UserRepository, EmailLogRepository
+from app.repositories.role_repository import RoleRepository
+from app.repositories.permission_repository import PermissionRepository
 from app.services import UserService, AuthService, EmailService, SchedulerService
 from app.services.profile_service import ProfileService
 from app.services.token_service import TokenService
@@ -6,13 +28,20 @@ from app.services.role_service import RoleService
 from app.services.permission_service import PermissionService
 from app.services.AWS_s3_document_storage_service import AwsS3DocumentStorageService
 from app.services.email_template_service import EmailTemplateService
-from app.repositories import UserRepository, EmailLogRepository
-from app.repositories.role_repository import RoleRepository
-from app.repositories.permission_repository import PermissionRepository
-from dependency_injector import containers, providers
-from app.core.database.session import async_session
+from app.services.cache.cache_resource import cache_service_resource
+
 
 class Container(containers.DeclarativeContainer):
+    """
+    Application DI container with declarative, lifecycle-managed providers.
+    
+    Provider Types Used:
+        - Resource: Async lifecycle-managed dependencies (db, cache)
+        - Factory: New instance per injection (services with request scope)
+        - Singleton: Single instance for app lifetime (token service)
+        - Dependency: Late-bound dependencies to prevent cycles
+    """
+    
     wiring_config = containers.WiringConfiguration(
         modules=[
             "app.api.endpoints.v1.user",
@@ -26,12 +55,20 @@ class Container(containers.DeclarativeContainer):
         ]
     )
 
+    # ========================================================================
+    # Infrastructure Layer - Lifecycle-managed resources
+    # ========================================================================
+    
     # Request-scoped AsyncSession
     db_session = providers.Resource(async_session)
 
-    # Cache service - injected from app.state during startup
-    cache_service = providers.Object(None)
+    # Cache service - declarative async resource (no runtime override needed)
+    cache_service = providers.Resource(cache_service_resource)
 
+    # ========================================================================
+    # Repository Layer - Factory providers (new instance per request)
+    # ========================================================================
+    
     user_repository = providers.Factory(
         UserRepository,
         db=db_session
@@ -47,25 +84,25 @@ class Container(containers.DeclarativeContainer):
         db=db_session
     )
 
-    # RBAC: Permission repository for loading user permissions
     permission_repository = providers.Factory(
         PermissionRepository,
         db=db_session
     )
 
-    token_service = providers.Singleton(
-        TokenService
-    )
+    # ========================================================================
+    # Service Layer - Singletons and Factories
+    # ========================================================================
+    
+    token_service = providers.Singleton(TokenService)
+
+    email_template_service = providers.Singleton(EmailTemplateService)
 
     email_service = providers.Factory(
         EmailService,
         db=db_session
     )
 
-    email_template_service = providers.Singleton(
-        EmailTemplateService
-    )
-
+    # User service - uses repositories, not other services directly
     user_service = providers.Factory(
         UserService,
         user_repository=user_repository,
@@ -91,15 +128,7 @@ class Container(containers.DeclarativeContainer):
         cache_service=cache_service
     )
 
-    email_service = providers.Factory(
-        EmailService,
-        db=db_session
-    )
-
-    email_template_service = providers.Singleton(
-        EmailTemplateService
-    )
-
+    # Auth service - depends on repositories and utility services
     auth_service = providers.Factory(
         AuthService,
         user_repository=user_repository,
@@ -109,11 +138,8 @@ class Container(containers.DeclarativeContainer):
         email_template_service=email_template_service
     )
 
-    document_storage_service = providers.Singleton(
-        AwsS3DocumentStorageService
-    )
+    document_storage_service = providers.Singleton(AwsS3DocumentStorageService)
 
-    scheduler_service = providers.Singleton(
-        SchedulerService
-    )
+    scheduler_service = providers.Singleton(SchedulerService)
+
 

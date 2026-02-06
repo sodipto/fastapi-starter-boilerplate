@@ -21,15 +21,24 @@ from app.core.middlewares.validation_exception_middleware import custom_validati
 from app.core.open_api import custom_openapi
 from app.core.seeders.application import ApplicationSeeder
 from app.jobs import register_all_jobs
-from app.services.cache.cache_factory import init_cache_service, shutdown_cache_service
 
 
 @asynccontextmanager
 async def startup(app: FastAPI):
-    # Use a fresh logger reference in case logging was reconfigured
+    """
+    Application lifespan manager with declarative DI initialization.
+    
+    Key Design Improvements:
+        1. No runtime DI overrides - all providers are declarative
+        2. Container manages resource lifecycle (init/shutdown)
+        3. Async resources (cache, db) properly initialized via Resource providers
+        4. Testable: override container providers before init_resources()
+    """
     _logger = get_logger(__name__)
     
     _logger.info("Starting up application...")
+    
+    # Database migrations (if enabled)
     if settings.DATABASE_ENABLED:
         run_pending_migrations()
         # Reconfigure logging after Alembic (which overrides logging config)
@@ -45,12 +54,10 @@ async def startup(app: FastAPI):
             _logger.error(f"Seeding failed: {e}")
             raise SystemExit("Application startup aborted due to seeding failure.")
     
-    # Initialize cache service
-    cache_service = await init_cache_service()
-    app.state.cache_service = cache_service
-    # Inject cache_service into the DI container
-    app.container.cache_service.override(cache_service)
-    _logger.info(f"Cache service initialized (type: {settings.CACHE_TYPE})")
+    # Initialize all container resources declaratively
+    # This includes cache_service which is now a proper Resource provider
+    await app.container.init_resources()
+    _logger.info(f"Container resources initialized (cache type: {settings.CACHE_TYPE})")
     
     # Initialize and start the background scheduler
     scheduler_service = None
@@ -67,16 +74,16 @@ async def startup(app: FastAPI):
     # Shutdown
     _logger.info("Shutting down application...")
     
-    # Shutdown cache service
-    if hasattr(app.state, "cache_service"):
-        await shutdown_cache_service(app.state.cache_service)
-        _logger.info("Cache service shutdown.")
-    
-    # Shutdown scheduler
+    # Shutdown scheduler first (before container resources)
     if scheduler_service:
         scheduler_service.shutdown()
         _logger.info("Background scheduler stopped.")
     
+    # Shutdown all container resources (cache, db sessions, etc.)
+    # This properly cleans up all Resource providers
+    await app.container.shutdown_resources()
+    _logger.info("Container resources shutdown complete.")
+
 
 app = FastAPI(
     title=f"{settings.OPENAPI_TITLE}",
@@ -90,13 +97,15 @@ app = FastAPI(
 
 if settings.OPENAPI_ENABLED:
     app.openapi = lambda: custom_openapi(app)
-container = Container() 
-container.init_resources()
+
+# Create container with declarative configuration
+# All providers are defined at class level - no runtime modifications
+container = Container()
 app.container = container
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust as needed for production [e.g., specific domains]
+    allow_origins=["http://localhost:3000"],  # Adjust as needed for production [e.g., specific domains]
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=False,

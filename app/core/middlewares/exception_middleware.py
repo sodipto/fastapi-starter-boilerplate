@@ -6,7 +6,7 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from app.schema.response.error import ErrorBody, ErrorResponse
-from app.utils.exception_utils import BadRequestException, ConflictException, ForbiddenException, NotFoundException, UnauthorizedException
+from app.utils.exception_utils import BadRequestException, ConflictException, ForbiddenException, NotFoundException, UnauthorizedException, TooManyRequestsException
 from app.core.logger import get_logger
 from app.core.identity import extract_user_id_from_request
 try:
@@ -75,6 +75,27 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=e.status_code,
                 content=error_response.model_dump()
+            )
+        
+        except TooManyRequestsException as e:
+            log_id = str(uuid.uuid4())
+            user_id = extract_user_id_from_request(request)
+            
+            error_response = ErrorResponse(
+                error=ErrorBody(
+                    logId=log_id,
+                    statusCode=e.status_code,
+                    type=e.type,
+                    messages=e.messages
+                )
+            )
+            
+            self._log_error(log_id, user_id, e.type, e.status_code, error_response, request)
+            
+            return JSONResponse(
+                status_code=e.status_code,
+                content=error_response.model_dump(),
+                headers={"Retry-After": str(e.retry_after)}
             )
             
         except Exception as e:

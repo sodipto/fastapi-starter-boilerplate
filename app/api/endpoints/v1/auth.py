@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from dependency_injector.wiring import inject, Provide
 
 from app.core.container import Container
+from app.core.rbac.rate_limit import RateLimit
 from app.schema.request.auth.login import LoginRequest
 from app.schema.request.auth.signup import SignupRequest
 from app.schema.request.auth.confirm_email import ConfirmEmailRequest
@@ -22,7 +23,12 @@ router = APIRouter(
 )
 
 
-@router.post("/login", summary="Login with email and password", response_model=AuthResponse)
+@router.post(
+    "/login", 
+    summary="Login with email and password", 
+    response_model=AuthResponse,
+    dependencies=[Depends(RateLimit(requests=5, window=1))]  # 5 requests per second
+)
 @inject
 async def login(
     payload: LoginRequest,
@@ -31,7 +37,12 @@ async def login(
     return await auth_service.login(payload.email, payload.password)
 
 
-@router.post("/refresh-token", summary="Refresh access and refresh token", response_model=AuthResponse)
+@router.post(
+    "/refresh-token", 
+    summary="Refresh access and refresh token", 
+    response_model=AuthResponse,
+    dependencies=[Depends(RateLimit(requests=10, window=1))]  # 10 requests per second
+)
 @inject
 async def refresh_token(
     payload: TokenRefreshRequest,
@@ -53,7 +64,12 @@ async def refresh_token(
     return await auth_service.refresh_token(payload.access_token, payload.refresh_token)
 
 
-@router.post("/forgot-password", summary="Request password reset verification code", response_model=ResponseMeta)
+@router.post(
+    "/forgot-password", 
+    summary="Request password reset verification code", 
+    response_model=ResponseMeta,
+    dependencies=[Depends(RateLimit(requests=3, window=60))]  # 3 requests per minute (prevent abuse)
+)
 @inject
 async def forgot_password(
     payload: ForgotPasswordRequest,
@@ -73,7 +89,12 @@ async def forgot_password(
     return await auth_service.forgot_password(payload.email)
 
 
-@router.post("/signup", summary="Create a new user account", response_model=ResponseMeta)
+@router.post(
+    "/signup", 
+    summary="Create a new user account", 
+    response_model=ResponseMeta,
+    dependencies=[Depends(RateLimit(requests=5, window=60))]  # 5 requests per minute (prevent spam)
+)
 @inject
 async def signup(
     payload: SignupRequest,
@@ -83,7 +104,12 @@ async def signup(
     return await user_service.signup(payload)
 
 
-@router.post("/confirm-email", summary="Confirm email address", response_model=ResponseMeta)
+@router.post(
+    "/confirm-email", 
+    summary="Confirm email address", 
+    response_model=ResponseMeta,
+    dependencies=[Depends(RateLimit(requests=5, window=60))]  # 5 requests per minute
+)
 @inject
 async def confirm_email(
     payload: ConfirmEmailRequest,
@@ -92,7 +118,12 @@ async def confirm_email(
     return await user_service.confirm_email(payload.email, payload.verification_code)
 
 
-@router.post("/resend-confirmation", summary="Resend email confirmation", response_model=ResponseMeta)
+@router.post(
+    "/resend-confirmation", 
+    summary="Resend email confirmation", 
+    response_model=ResponseMeta,
+    dependencies=[Depends(RateLimit(requests=3, window=60))]  # 3 requests per minute (prevent email spam)
+)
 @inject
 async def resend_confirmation(
     payload: ResendConfirmationRequest,
@@ -101,7 +132,12 @@ async def resend_confirmation(
     return await user_service.resend_confirmation(payload.email)
 
 
-@router.post("/reset-password", summary="Reset password using verification code", response_model=ResponseMeta)
+@router.post(
+    "/reset-password", 
+    summary="Reset password using verification code", 
+    response_model=ResponseMeta,
+    dependencies=[Depends(RateLimit(requests=5, window=60))]  # 5 requests per minute
+)
 @inject
 async def reset_password(
     payload: ResetPasswordRequest,

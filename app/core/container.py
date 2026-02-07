@@ -29,6 +29,7 @@ from app.services.permission_service import PermissionService
 from app.services.AWS_s3_document_storage_service import AwsS3DocumentStorageService
 from app.services.email_template_service import EmailTemplateService
 from app.services.cache.cache_resource import cache_service_resource
+from app.services.rate_limit_service import RateLimitService
 
 
 class Container(containers.DeclarativeContainer):
@@ -52,6 +53,8 @@ class Container(containers.DeclarativeContainer):
             "app.api.endpoints.v1.profile",
             "app.api.endpoints.v1.cache",
             "app.core.rbac.dependencies",  # RBAC permission dependencies
+            "app.core.rbac.rate_limit",  # Per-route rate limiting
+            "app.core.middlewares.rate_limit_middleware",  # Global rate limiting middleware
         ]
     )
 
@@ -141,5 +144,11 @@ class Container(containers.DeclarativeContainer):
     document_storage_service = providers.Singleton(AwsS3DocumentStorageService)
 
     scheduler_service = providers.Singleton(SchedulerService)
+
+    # Rate limiting service - uses cache for storage (memory or Redis)
+    rate_limit_service = providers.Factory(
+        RateLimitService,
+        cache_service=cache_service
+    )
 
 

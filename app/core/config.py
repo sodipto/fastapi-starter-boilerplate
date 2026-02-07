@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     # Cache settings
     CACHE_TYPE: str = "memory"  # Options: memory, redis
     REDIS_URL: str = "redis://localhost:6379"
+    REDIS_PASSWORD: str | None = None
+    REDIS_DB: int = 0
+    REDIS_SSL: bool = False
+    
+    # Rate limiting settings
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS: int = 100  # Max requests allowed per window
+    RATE_LIMIT_WINDOW_SECONDS: int = 1  # Window size (1 = per second, 60 = per minute)
+    RATE_LIMIT_EXEMPT_PATHS: list[str] = ["/health", "/swagger", "/redoc", "/openapi.json"]  # Paths exempt from rate limiting
     
     # Seq logging settings
     SEQ_ENABLED: bool = False

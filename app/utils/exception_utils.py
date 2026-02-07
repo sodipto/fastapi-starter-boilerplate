@@ -42,3 +42,13 @@ class ConflictException(Exception):
         self.messages = {
             key: message,
         }
+
+
+class TooManyRequestsException(Exception):
+    def __init__(self, retry_after: int = 1):
+        self.type = "TooManyRequestsException"
+        self.status_code = status.HTTP_429_TOO_MANY_REQUESTS
+        self.retry_after = retry_after
+        self.messages = {
+            "RateLimit": f"Too many requests. Please retry after {retry_after} seconds.",
+        }

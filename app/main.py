@@ -18,6 +18,7 @@ from app.api.endpoints.routes import routers as v1_routers
 from app.core.database.migrate import run_pending_migrations
 from app.core.middlewares.exception_middleware import CustomExceptionMiddleware
 from app.core.middlewares.validation_exception_middleware import custom_validation_exception_middleware
+from app.core.middlewares.rate_limit_middleware import RateLimitMiddleware
 from app.core.open_api import custom_openapi
 from app.core.seeders.application import ApplicationSeeder
 from app.jobs import register_all_jobs
@@ -102,6 +103,11 @@ if settings.OPENAPI_ENABLED:
 # All providers are defined at class level - no runtime modifications
 container = Container()
 app.container = container
+
+# Rate limiting middleware - runs first (outermost)
+# Uses cache service (memory or Redis) for distributed rate limiting
+if settings.RATE_LIMIT_ENABLED:
+    app.add_middleware(RateLimitMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

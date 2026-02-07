@@ -138,11 +138,14 @@ class UserService(IUserService):
             email_confirmed=False
         )
 
-        created_user = await self.user_repository.create(user)
+        # Create user without committing yet
+        created_user = await self.user_repository.create(user, auto_commit=False)
 
         # Assign roles if provided
         if user_request.role_ids:
-            await self.user_repository.assign_roles(created_user.id, user_request.role_ids)
+            await self.user_repository.assign_roles(created_user.id, user_request.role_ids, auto_commit=False)
+
+        await self.user_repository.commit()
 
         # Reload user with roles
         created_user = await self.user_repository.get_by_id_with_roles(created_user.id)
@@ -176,16 +179,18 @@ class UserService(IUserService):
             email_confirmed=False,
         )
 
-        created_user = await self.user_repository.create(user)
+        created_user = await self.user_repository.create(user, auto_commit=False)
 
         # Assign system role CUSTOMER (required)
-        await self.user_repository.assign_roles(created_user.id, [role.id])
-
+        await self.user_repository.assign_roles(created_user.id, [role.id], auto_commit=False)
+        
         # If email confirmation is required, generate code and send email
         if settings.REQUIRE_EMAIL_CONFIRMED_ACCOUNT:
             await self._generate_verification_and_send_email(created_user)
+            await self.user_repository.commit()
             return ResponseMeta(message="Signup successful. Confirmation email sent.")
 
+        await self.user_repository.commit()
         return ResponseMeta(message="Signup successful.")
 
     async def confirm_email(self, email: str, verification_code: str) -> ResponseMeta:
@@ -215,6 +220,7 @@ class UserService(IUserService):
         user.email_confirmed = True
         user.email_verification_code = None
         user.email_verification_code_expiry_time = None
+        # Single update, safe to auto-commit
         await self.user_repository.update(user)
 
         return ResponseMeta(message="Email confirmed successfully.")
@@ -227,6 +233,7 @@ class UserService(IUserService):
         if user.email_confirmed:
             return ResponseMeta(message="Email already confirmed.")
         await self._generate_verification_and_send_email(user)
+        await self.user_repository.commit()
         return ResponseMeta(message="Confirmation email resent.")
 
     async def _generate_verification_and_send_email(self, user: User) -> None:
@@ -235,7 +242,7 @@ class UserService(IUserService):
         expiry_time = datetime.now(timezone.utc) + timedelta(minutes=settings.EMAIL_VERIFICATION_CODE_EXPIRE_MINUTES)
         user.email_verification_code = verification_code
         user.email_verification_code_expiry_time = expiry_time
-        await self.user_repository.update(user)
+        await self.user_repository.update(user, auto_commit=False) # We will handle commit in caller
 
         confirm_link = f"{settings.FRONTEND_URL}/confirm-email?code={verification_code}&email={user.email}"
         body = self.email_template_service.render(
@@ -278,11 +285,14 @@ class UserService(IUserService):
                     f"Roles with ids {missing_role_ids} not found"
                 )
 
-        updated_user = await self.user_repository.update(user)
+        # Update user fields
+        updated_user = await self.user_repository.update(user, auto_commit=False)
 
         # Update roles if provided
         if user_request.role_ids is not None:
-            await self.user_repository.assign_roles(user_id, user_request.role_ids)
+            await self.user_repository.assign_roles(user_id, user_request.role_ids, auto_commit=False)
+
+        await self.user_repository.commit()
 
         # Reload user with updated roles
         updated_user = await self.user_repository.get_by_id_with_roles(user_id)

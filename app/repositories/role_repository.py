@@ -91,20 +91,26 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
         )
         return list(result.scalars().all())
 
-    async def sync_role_claims(self, role_id: uuid.UUID, claim_names: list[str]) -> list[RoleClaim]:
+    async def sync_role_claims(self, role_id: uuid.UUID, claim_names: list[str], auto_commit: bool = True) -> list[RoleClaim]:
         """
         Sync role claims - add new, remove old, keep existing.
         
         Args:
             role_id: The role ID
             claim_names: List of claim names that should exist
+            auto_commit: Whether to commit changes
             
         Returns:
             List of current claims after sync
         """
         # Get existing claims
-        existing_claims = await self.get_role_claims(role_id)
-        existing_claim_names = {claim.claim_name for claim in existing_claims}
+        result = await self.db.execute(
+            select(RoleClaim.claim_name).where(
+                RoleClaim.role_id == str(role_id),
+                RoleClaim.claim_type == PermissionClaimType.PERMISSION.value
+            )
+        )
+        existing_claim_names = set(result.scalars().all())
         target_claim_names = set(claim_names)
         
         # Claims to add (new ones)
@@ -118,7 +124,8 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
             await self.db.execute(
                 delete(RoleClaim).where(
                     RoleClaim.role_id == str(role_id),
-                    RoleClaim.claim_name.in_(claims_to_remove)
+                    RoleClaim.claim_name.in_(claims_to_remove),
+                    RoleClaim.claim_type == PermissionClaimType.PERMISSION.value
                 )
             )
         
@@ -131,8 +138,11 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
             )
             self.db.add(new_claim)
         
-        # Flush to persist changes
-        await self.db.flush()
+        # Flush or commit
+        if auto_commit:
+            await self.db.commit()
+        else:
+            await self.db.flush()
         
         # Return updated claims
         return await self.get_role_claims(role_id)

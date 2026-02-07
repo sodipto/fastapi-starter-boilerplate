@@ -15,10 +15,13 @@ class BaseRepository(IBaseRepository[T], Generic[T]):
         self.db = db
         self.model = model
 
-    async def create(self, entity: T) -> T:
+    async def create(self, entity: T, auto_commit: bool = True) -> T:
         """Create a new entity in the database."""
         self.db.add(entity)
-        await self.db.commit()
+        if auto_commit:
+            await self.db.commit()
+        else:
+            await self.db.flush()
         await self.db.refresh(entity)
 
         return entity
@@ -39,19 +42,29 @@ class BaseRepository(IBaseRepository[T], Generic[T]):
 
         return list(result.scalars().all())
 
-    async def update(self, entity: T) -> T:
+    async def update(self, entity: T, auto_commit: bool = True) -> T:
         """Update an entity in the database."""
         self.db.add(entity)
-        await self.db.commit()
+        if auto_commit:
+            await self.db.commit()
+        else:
+            await self.db.flush()
         await self.db.refresh(entity)
 
         return entity
 
-    async def delete(self, id: uuid.UUID) -> bool:
+    async def delete(self, id: uuid.UUID, auto_commit: bool = True) -> bool:
         """Delete an entity by id."""
         result = await self.db.execute(
             sql_delete(self.model).where(self.model.id == str(id))
         )
-        await self.db.commit()
+        if auto_commit:
+            await self.db.commit()
+        else:
+            await self.db.flush()
 
         return result.rowcount > 0
+
+    async def commit(self) -> None:
+        """Commit the current transaction."""
+        await self.db.commit()

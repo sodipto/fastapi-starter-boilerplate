@@ -71,7 +71,7 @@ class UserRepository(BaseRepository[User], IUserRepository):
         
         return users, total
 
-    async def assign_roles(self, user_id: uuid.UUID, role_ids: list[uuid.UUID]) -> None:
+    async def assign_roles(self, user_id: uuid.UUID, role_ids: list[uuid.UUID], auto_commit: bool = True) -> None:
         """Assign roles to a user, replacing existing roles."""
         # Remove existing user roles
         await self.db.execute(
@@ -86,5 +86,8 @@ class UserRepository(BaseRepository[User], IUserRepository):
             )
             self.db.add(user_role)
         
-        # Flush to persist changes
-        await self.db.flush()
+        # Flush or commit
+        if auto_commit:
+            await self.db.commit()
+        else:
+            await self.db.flush()

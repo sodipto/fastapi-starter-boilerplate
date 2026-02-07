@@ -70,6 +70,7 @@ class RoleService(IRoleService):
             )
 
         # Create new role
+        # Create new role
         role = Role(
             name=role_request.name,
             normalized_name=role_request.name.upper(),
@@ -77,16 +78,20 @@ class RoleService(IRoleService):
             is_system=False
         )
 
-        created_role = await self.role_repository.create(role)
+        created_role = await self.role_repository.create(role, auto_commit=False)
 
         # Sync claims if provided
         if role_request.claims:
             await self.role_repository.sync_role_claims(
                 created_role.id, 
-                role_request.claims
+                role_request.claims,
+                auto_commit=False
             )
-            # Reload role to get claims
-            created_role = await self.role_repository.get_by_id(created_role.id)
+        
+        await self.role_repository.commit()
+
+        # Reload role to get claims
+        created_role = await self.role_repository.get_by_id(created_role.id)
 
         return self._to_response(created_role)
 
@@ -149,14 +154,17 @@ class RoleService(IRoleService):
         role.normalized_name = role_request.name.upper()
         role.description = role_request.description
 
-        updated_role = await self.role_repository.update(role)
+        updated_role = await self.role_repository.update(role, auto_commit=False)
 
         # Sync claims (add new, remove old, keep existing)
         await self.role_repository.sync_role_claims(
             role_id, 
-            role_request.claims
+            role_request.claims,
+            auto_commit=False
         )
         
+        await self.role_repository.commit()
+
         # Reload role to get updated claims
         updated_role = await self.role_repository.get_by_id(role_id)
 
@@ -187,4 +195,5 @@ class RoleService(IRoleService):
                 f"Cannot delete role '{role.name}' because it is assigned to {user_count} user(s). Please remove the role from all users before deleting."
             )
 
-        return await self.role_repository.delete(role_id)
+        result = await self.role_repository.delete(role_id)
+        return result

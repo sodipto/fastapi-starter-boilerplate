@@ -14,7 +14,7 @@ class IBaseRepository(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    async def create(self, entity: T) -> T:
+    async def create(self, entity: T, auto_commit: bool = True) -> T:
         """Create a new entity."""
         pass
 
@@ -29,11 +29,16 @@ class IBaseRepository(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    async def update(self, entity: T) -> T:
+    async def update(self, entity: T, auto_commit: bool = True) -> T:
         """Update an entity."""
         pass
 
     @abstractmethod
-    async def delete(self, id: uuid.UUID) -> bool:
+    async def delete(self, id: uuid.UUID, auto_commit: bool = True) -> bool:
         """Delete an entity by id."""
+        pass
+
+    @abstractmethod
+    async def commit(self) -> None:
+        """Commit the current transaction."""
         pass

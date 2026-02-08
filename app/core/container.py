@@ -17,7 +17,7 @@ Cyclic Dependency Prevention:
 """
 from dependency_injector import containers, providers
 
-from app.core.database.session import async_session
+from app.core.database.session import async_session, get_db
 from app.repositories import UserRepository, EmailLogRepository
 from app.repositories.role_repository import RoleRepository
 from app.repositories.permission_repository import PermissionRepository
@@ -62,8 +62,8 @@ class Container(containers.DeclarativeContainer):
     # Infrastructure Layer - Lifecycle-managed resources
     # ========================================================================
     
-    # Request-scoped AsyncSession
-    db_session = providers.Resource(async_session)
+    # Provide a new AsyncSession instance per injection (factory)
+    db_session_factory = providers.Factory(async_session)
 
     # Cache service - declarative async resource (no runtime override needed)
     cache_service = providers.Resource(cache_service_resource)
@@ -74,22 +74,22 @@ class Container(containers.DeclarativeContainer):
     
     user_repository = providers.Factory(
         UserRepository,
-        db=db_session
+        db=db_session_factory
     )
 
     role_repository = providers.Factory(
         RoleRepository,
-        db=db_session
+        db=db_session_factory
     )
 
     email_log_repository = providers.Factory(
         EmailLogRepository,
-        db=db_session
+        db=db_session_factory
     )
 
     permission_repository = providers.Factory(
         PermissionRepository,
-        db=db_session
+        db=db_session_factory
     )
 
     # ========================================================================
@@ -102,7 +102,7 @@ class Container(containers.DeclarativeContainer):
 
     email_service = providers.Factory(
         EmailService,
-        db=db_session
+        db=db_session_factory
     )
 
     # User service - uses repositories, not other services directly

@@ -27,7 +27,7 @@ router = APIRouter(
     "/login", 
     summary="Login with email and password", 
     response_model=AuthResponse,
-    # dependencies=[Depends(RateLimit(requests=5, window=1))]  # 5 requests per second
+    dependencies=[Depends(RateLimit(requests=5, window=1))]  # 5 requests per second
 )
 @inject
 async def login(

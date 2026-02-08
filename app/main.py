@@ -111,7 +111,8 @@ if settings.RATE_LIMIT_ENABLED:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Adjust as needed for production [e.g., specific domains]
+    #allow_origins=["http://localhost:3000"],  # Adjust as needed for production [e.g., specific domains]
+    allow_origins=["*"],  # Adjust as needed for production [e.g., specific domains]
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=False,

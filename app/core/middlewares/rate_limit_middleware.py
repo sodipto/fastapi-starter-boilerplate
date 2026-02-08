@@ -20,6 +20,7 @@ from app.core.config import settings
 from app.core.container import Container
 from app.services.interfaces.rate_limit_service_interface import IRateLimitService
 from app.schema.response.error import ErrorBody, ErrorResponse
+from app.utils.ip_utils import get_client_ip
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -35,31 +36,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         X-RateLimit-Reset: Unix timestamp when window resets
         Retry-After: Seconds until retry allowed (only on 429)
     """
-
-    def _get_client_ip(self, request: Request) -> str:
-        """
-        Extract client IP address from request.
-        
-        Handles X-Forwarded-For header for requests behind proxies/load balancers.
-        Falls back to direct client IP if header not present.
-        """
-        # Check for X-Forwarded-For header (set by reverse proxies)
-        forwarded_for = request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            # X-Forwarded-For can contain multiple IPs: client, proxy1, proxy2
-            # The first IP is the original client
-            return forwarded_for.split(",")[0].strip()
-        
-        # Check for X-Real-IP header (used by some proxies)
-        real_ip = request.headers.get("X-Real-IP")
-        if real_ip:
-            return real_ip.strip()
-        
-        # Fall back to direct client IP
-        if request.client:
-            return request.client.host
-        
-        return "unknown"
 
     def _is_exempt_path(self, path: str) -> bool:
         """Check if the request path is exempt from rate limiting."""
@@ -90,7 +66,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         
         # Get client identifier (IP address)
-        client_ip = self._get_client_ip(request)
+        client_ip = get_client_ip(request)
         
         # Check rate limit
         result = await rate_limit_service.check_rate_limit(client_ip)

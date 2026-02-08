@@ -112,6 +112,45 @@ class InMemoryCacheService(ICacheService):
                 last_accessed=time.time()
             )
 
+    async def increment(self, key: str, delta: int = 1, ttl: int | None = None) -> int:
+        """
+        Atomically increment a value in the cache.
+        
+        Args:
+            key: The cache key.
+            delta: The amount to increment by.
+            ttl: Optional time to live in seconds if the key is created.
+            
+        Returns:
+            The new value.
+        """
+        async with self._lock:
+            entry = self._cache.get(key)
+            if entry is None or entry.is_expired():
+                # Start new counter
+                new_value = delta
+                self._cache[key] = CacheEntry(
+                    value=new_value,
+                    sliding_expiration=ttl,  # Use provided TTL
+                    last_accessed=time.time()
+                )
+            else:
+                try:
+                    current_value = int(entry.value)
+                    new_value = current_value + delta
+                    entry.value = new_value
+                    entry.refresh()
+                except (ValueError, TypeError):
+                    # Handle case where value is not an integer
+                    new_value = delta
+                    self._cache[key] = CacheEntry(
+                        value=new_value,
+                        sliding_expiration=entry.sliding_expiration,
+                        last_accessed=time.time()
+                    )
+            
+            return new_value
+
     async def refresh(self, key: str) -> bool:
         """
         Refresh the expiration time for a cache entry.

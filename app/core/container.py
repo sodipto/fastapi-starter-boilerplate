@@ -53,7 +53,7 @@ class Container(containers.DeclarativeContainer):
             "app.api.endpoints.v1.profile",
             "app.api.endpoints.v1.cache",
             "app.core.rbac.dependencies",  # RBAC permission dependencies
-            "app.core.rbac.rate_limit",  # Per-route rate limiting
+            "app.core.rate_limiting.rate_limit",  # Per-route rate limiting
             "app.core.middlewares.rate_limit_middleware",  # Global rate limiting middleware
         ]
     )

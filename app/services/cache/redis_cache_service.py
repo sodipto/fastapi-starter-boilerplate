@@ -79,6 +79,23 @@ class RedisCacheService(ICacheService):
             meta_key = f"{self.EXPIRATION_META_PREFIX}{key}"
             await self._redis.delete(meta_key)
 
+    async def increment(self, key: str, delta: int = 1, ttl: int | None = None) -> int:
+        """
+        Atomically increment a value in the cache.
+        
+        Args:
+            key: The cache key.
+            delta: The amount to increment by.
+            ttl: Optional time to live in seconds if the key is created.
+            
+        Returns:
+            The new value.
+        """
+        value = await self._redis.incrby(key, delta)
+        if ttl is not None and value == delta:
+            await self._redis.expire(key, ttl)
+        return value
+
     async def _refresh_if_sliding(self, key: str) -> None:
         """
         Refresh the expiration time if sliding expiration is set.

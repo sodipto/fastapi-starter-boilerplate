@@ -48,27 +48,18 @@ class RateLimitService(IRateLimitService):
         Check if the given key is rate limited and increment the counter.
         
         Uses atomic increment pattern:
-        1. Get current count for this window
-        2. Increment count
-        3. Return limit status with metadata
+        1. Increment count atomically
+        2. Return limit status with metadata
         """
         cache_key, reset_at = self._get_window_key(key)
         current_time = int(time.time())
         retry_after = max(0, reset_at - current_time)
         
-        # Get current count
-        current_count = await self._cache.get(cache_key)
-        if current_count is None:
-            current_count = 0
-        else:
-            current_count = int(current_count)
-        
-        # Increment count
-        new_count = current_count + 1
-        await self._cache.set(
+        # Increment count atomically (with TTL on first write)
+        new_count = await self._cache.increment(
             cache_key, 
-            new_count, 
-            sliding_expiration=self._window_seconds + 1  # Add 1s buffer
+            delta=1, 
+            ttl=self._window_seconds + 1
         )
         
         # Check if limited
@@ -112,19 +103,11 @@ class RateLimitService(IRateLimitService):
         current_time = int(time.time())
         retry_after = max(0, reset_at - current_time)
         
-        # Get current count
-        current_count = await self._cache.get(cache_key)
-        if current_count is None:
-            current_count = 0
-        else:
-            current_count = int(current_count)
-        
-        # Increment count
-        new_count = current_count + 1
-        await self._cache.set(
+        # Increment count atomically
+        new_count = await self._cache.increment(
             cache_key, 
-            new_count, 
-            sliding_expiration=window_seconds + 1
+            delta=1, 
+            ttl=window_seconds + 1
         )
         
         # Check if limited

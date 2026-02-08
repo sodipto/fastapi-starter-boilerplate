@@ -21,6 +21,7 @@ from app.core.container import Container
 from app.core.config import settings
 from app.services.interfaces.rate_limit_service_interface import IRateLimitService
 from app.utils.exception_utils import TooManyRequestsException
+from app.utils.ip_utils import get_client_ip
 
 
 class RateLimit:
@@ -38,21 +39,6 @@ class RateLimit:
         self.window = window
         self.key_prefix = key_prefix
 
-    def _get_client_ip(self, request: Request) -> str:
-        """Extract client IP from request, handling proxies."""
-        forwarded_for = request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            return forwarded_for.split(",")[0].strip()
-        
-        real_ip = request.headers.get("X-Real-IP")
-        if real_ip:
-            return real_ip.strip()
-        
-        if request.client:
-            return request.client.host
-        
-        return "unknown"
-
     @inject
     async def __call__(
         self,
@@ -63,7 +49,7 @@ class RateLimit:
         if not settings.RATE_LIMIT_ENABLED:
             return
         
-        client_ip = self._get_client_ip(request)
+        client_ip = get_client_ip(request)
         path = request.url.path
         
         # Build unique key: prefix or path + IP
@@ -83,8 +69,3 @@ class RateLimit:
         # Store rate limit info in request state for response headers
         request.state.rate_limit_result = result
 
-
-# Pre-configured rate limit dependencies for common use cases
-rate_limit_strict = RateLimit(requests=5, window=1)      # 5/sec - login, password reset
-rate_limit_normal = RateLimit(requests=20, window=1)     # 20/sec - normal endpoints
-rate_limit_relaxed = RateLimit(requests=100, window=1)   # 100/sec - read-heavy endpoints

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from dependency_injector.wiring import inject, Provide
 
 from app.core.container import Container
-from app.core.rbac.rate_limit import RateLimit
+from app.core.rate_limiting import RateLimit
 from app.schema.request.auth.login import LoginRequest
 from app.schema.request.auth.signup import SignupRequest
 from app.schema.request.auth.confirm_email import ConfirmEmailRequest
@@ -27,7 +27,7 @@ router = APIRouter(
     "/login", 
     summary="Login with email and password", 
     response_model=AuthResponse,
-    dependencies=[Depends(RateLimit(requests=5, window=1))]  # 5 requests per second
+    # dependencies=[Depends(RateLimit(requests=5, window=1))]  # 5 requests per second
 )
 @inject
 async def login(

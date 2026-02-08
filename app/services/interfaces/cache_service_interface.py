@@ -42,6 +42,21 @@ class ICacheService(ABC):
         pass
 
     @abstractmethod
+    async def increment(self, key: str, delta: int = 1, ttl: int | None = None) -> int:
+        """
+        Atomically increment a value in the cache.
+        
+        Args:
+            key: The cache key.
+            delta: The amount to increment by (default 1).
+            ttl: Optional time to live in seconds if the key is created.
+            
+        Returns:
+            The new value after incrementing.
+        """
+        pass
+
+    @abstractmethod
     async def refresh(self, key: str) -> bool:
         """
         Refresh the expiration time for a cache entry.

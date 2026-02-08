@@ -62,8 +62,8 @@ class Container(containers.DeclarativeContainer):
     # Infrastructure Layer - Lifecycle-managed resources
     # ========================================================================
     
-    # Provide a new AsyncSession instance per injection (factory)
-    db_session_factory = providers.Factory(async_session)
+    # Provide the sessionmaker (callable) so repositories can create sessions on demand
+    db_session_factory = providers.Object(async_session)
 
     # Cache service - declarative async resource (no runtime override needed)
     cache_service = providers.Resource(cache_service_resource)
@@ -74,22 +74,22 @@ class Container(containers.DeclarativeContainer):
     
     user_repository = providers.Factory(
         UserRepository,
-        db=db_session_factory
+        db_factory=db_session_factory
     )
 
     role_repository = providers.Factory(
         RoleRepository,
-        db=db_session_factory
+        db_factory=db_session_factory
     )
 
     email_log_repository = providers.Factory(
         EmailLogRepository,
-        db=db_session_factory
+        db_factory=db_session_factory
     )
 
     permission_repository = providers.Factory(
         PermissionRepository,
-        db=db_session_factory
+        db_factory=db_session_factory
     )
 
     # ========================================================================

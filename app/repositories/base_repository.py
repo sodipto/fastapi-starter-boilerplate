@@ -1,70 +1,70 @@
-from typing import TypeVar, Generic, Type, List
+from typing import TypeVar, Generic, Type, List, Callable
 from sqlalchemy import select, delete as sql_delete
-from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.interfaces.base_repository_interface import IBaseRepository
 
 T = TypeVar('T')
 
 
 class BaseRepository(IBaseRepository[T], Generic[T]):
-    """Base repository with common CRUD operations."""
+    """Base repository with common CRUD operations.
 
-    def __init__(self, db: AsyncSession, model: Type[T]):
-        self.db = db
+    This repository accepts a `db_factory` (callable/sessionmaker) which is used
+    to create a fresh `AsyncSession` for each operation to ensure connections
+    are returned to the pool promptly.
+    """
+
+    def __init__(self, db_factory: Callable[[], AsyncSession], model: Type[T]):
+        self.db_factory = db_factory
         self.model = model
 
     async def create(self, entity: T, auto_commit: bool = True) -> T:
-        """Create a new entity in the database."""
-        self.db.add(entity)
-        if auto_commit:
-            await self.db.commit()
-        else:
-            await self.db.flush()
-        await self.db.refresh(entity)
-
-        return entity
+        async with self.db_factory() as session:
+            session.add(entity)
+            if auto_commit:
+                await session.commit()
+            else:
+                await session.flush()
+            await session.refresh(entity)
+            return entity
 
     async def get_by_id(self, id: uuid.UUID) -> T | None:
-        """Get entity by id."""
-        result = await self.db.execute(
-            select(self.model).where(self.model.id == str(id))
-        )
-
-        return result.scalars().first()
+        async with self.db_factory() as session:
+            result = await session.execute(
+                select(self.model).where(self.model.id == str(id))
+            )
+            return result.scalars().first()
 
     async def get_all(self, skip: int = 0, limit: int = 20) -> List[T]:
-        """Get all entities with pagination."""
-        result = await self.db.execute(
-            select(self.model).order_by(self.model.id).offset(skip).limit(limit)
-        )
-
-        return list(result.scalars().all())
+        async with self.db_factory() as session:
+            result = await session.execute(
+                select(self.model).order_by(self.model.id).offset(skip).limit(limit)
+            )
+            return list(result.scalars().all())
 
     async def update(self, entity: T, auto_commit: bool = True) -> T:
-        """Update an entity in the database."""
-        self.db.add(entity)
-        if auto_commit:
-            await self.db.commit()
-        else:
-            await self.db.flush()
-        await self.db.refresh(entity)
-
-        return entity
+        async with self.db_factory() as session:
+            session.add(entity)
+            if auto_commit:
+                await session.commit()
+            else:
+                await session.flush()
+            await session.refresh(entity)
+            return entity
 
     async def delete(self, id: uuid.UUID, auto_commit: bool = True) -> bool:
-        """Delete an entity by id."""
-        result = await self.db.execute(
-            sql_delete(self.model).where(self.model.id == str(id))
-        )
-        if auto_commit:
-            await self.db.commit()
-        else:
-            await self.db.flush()
-
-        return result.rowcount > 0
+        async with self.db_factory() as session:
+            result = await session.execute(
+                sql_delete(self.model).where(self.model.id == str(id))
+            )
+            if auto_commit:
+                await session.commit()
+            else:
+                await session.flush()
+            return result.rowcount > 0
 
     async def commit(self) -> None:
-        """Commit the current transaction."""
-        await self.db.commit()
+        async with self.db_factory() as session:
+            await session.commit()

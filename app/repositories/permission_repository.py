@@ -9,7 +9,6 @@ Uses optimized SQL queries with JOINs for performance.
 
 from uuid import UUID
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import PermissionClaimType
 from app.models.role_claim import RoleClaim
@@ -20,19 +19,10 @@ from app.repositories.interfaces.permission_repository_interface import IPermiss
 class PermissionRepository(IPermissionRepository):
     """
     SQLAlchemy implementation of the permission repository.
-    
-    Provides efficient database access for permission queries
-    with optimized JOINs and filtering.
     """
 
-    def __init__(self, db: AsyncSession):
-        """
-        Initialize repository with database session.
-        
-        Args:
-            db: Async SQLAlchemy session for database operations
-        """
-        self.db = db
+    def __init__(self, db_factory):
+        self.db_factory = db_factory
 
     async def get_user_permissions(self, user_id: UUID) -> set[str]:
         """
@@ -59,8 +49,9 @@ class PermissionRepository(IPermissionRepository):
             .distinct()  # Avoid duplicates if user has multiple roles with same permission
         )
         
-        result = await self.db.execute(query)
-        return set(result.scalars().all())
+        async with self.db_factory() as session:
+            result = await session.execute(query)
+            return set(result.scalars().all())
 
     async def get_users_by_role(self, role_id: UUID) -> list[UUID]:
         """
@@ -79,5 +70,6 @@ class PermissionRepository(IPermissionRepository):
             .where(UserRole.role_id == role_id)
         )
         
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
+        async with self.db_factory() as session:
+            result = await session.execute(query)
+            return list(result.scalars().all())

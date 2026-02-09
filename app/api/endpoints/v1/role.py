@@ -10,6 +10,7 @@ This module demonstrates production-ready permission-based authorization:
 import uuid
 from fastapi import APIRouter, Depends, status
 from dependency_injector.wiring import inject, Provide
+from app.core.rate_limiting import RateLimit
 
 from app.core.container import Container
 from app.core.jwt_security import JWTBearer
@@ -60,7 +61,10 @@ async def get_all_permissions(
     summary="Create a new role",
     response_model=RoleResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_permission(AppPermissions.ROLES_CREATE))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.ROLES_CREATE)),
+        Depends(RateLimit(requests=10, window=60, key_prefix="roles_create")),
+    ]
 )
 @inject
 async def create(
@@ -83,7 +87,10 @@ async def create(
     "/search",
     summary="Search roles with pagination",
     response_model=PagedData[RoleSearchResponse],
-    dependencies=[Depends(require_permission(AppPermissions.ROLES_SEARCH))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.ROLES_SEARCH)),
+        Depends(RateLimit(requests=60, window=60, key_prefix="roles_search")),
+    ]
 )
 @inject
 async def search(
@@ -109,7 +116,10 @@ async def search(
     "/{id}",
     summary="Get role by id",
     response_model=RoleResponse,
-    dependencies=[Depends(require_permission(AppPermissions.ROLES_VIEW))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.ROLES_VIEW)),
+        Depends(RateLimit(requests=120, window=60, key_prefix="roles_view")),
+    ]
 )
 @inject
 async def get(
@@ -132,7 +142,10 @@ async def get(
     "/{id}",
     summary="Update role",
     response_model=RoleResponse,
-    dependencies=[Depends(require_permission(AppPermissions.ROLES_UPDATE))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.ROLES_UPDATE)),
+        Depends(RateLimit(requests=20, window=60, key_prefix="roles_update")),
+    ]
 )
 @inject
 async def update(
@@ -156,7 +169,10 @@ async def update(
     "/{id}",
     summary="Delete role",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission(AppPermissions.ROLES_DELETE))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.ROLES_DELETE)),
+        Depends(RateLimit(requests=5, window=60, key_prefix="roles_delete")),
+    ]
 )
 @inject
 async def delete(

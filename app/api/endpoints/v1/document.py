@@ -3,6 +3,7 @@ import uuid
 import os
 from fastapi import APIRouter, Depends, UploadFile, File
 from dependency_injector.wiring import inject, Provide
+from app.core.rate_limiting import RateLimit
 from app.core.container import Container
 from app.services.interfaces.document_storage_service_interface import DocumentStorageServiceInterface
 from app.schema.response.meta import ResponseMeta
@@ -20,7 +21,11 @@ from app.core.constants.file_extensions import (
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
 
-@router.post("/upload", response_model=DocumentOperationResponse)
+@router.post(
+    "/upload",
+    response_model=DocumentOperationResponse,
+    dependencies=[Depends(RateLimit(requests=10, window=60, key_prefix="documents_upload"))]
+)
 @inject
 async def upload_file(
     file: UploadFile = File(...),
@@ -67,7 +72,11 @@ async def upload_file(
         url=file_url
     )
 
-@router.post("/copy", response_model=DocumentOperationResponse)
+@router.post(
+    "/copy",
+    response_model=DocumentOperationResponse,
+    dependencies=[Depends(RateLimit(requests=30, window=60, key_prefix="documents_copy"))]
+)
 @inject
 async def copy_file(
     source_key: str,
@@ -95,7 +104,11 @@ async def copy_file(
     )
 
 
-@router.post("/move", response_model=DocumentOperationResponse)
+@router.post(
+    "/move",
+    response_model=DocumentOperationResponse,
+    dependencies=[Depends(RateLimit(requests=30, window=60, key_prefix="documents_move"))]
+)
 @inject
 async def move_file(
     source_key: str,
@@ -122,7 +135,11 @@ async def move_file(
         url=file_url
     )
 
-@router.delete("/delete", response_model=ResponseMeta)
+@router.delete(
+    "/delete",
+    response_model=ResponseMeta,
+    dependencies=[Depends(RateLimit(requests=30, window=60, key_prefix="documents_delete"))]
+)
 @inject
 async def delete_file(
     file_key: str,
@@ -140,4 +157,5 @@ async def delete_file(
     result = await document_storage_service.remove(file_key)
     
     return result
+
 

@@ -12,6 +12,7 @@ This module provides CRUD operations for user management:
 import uuid
 from fastapi import APIRouter, Depends, status
 from dependency_injector.wiring import inject, Provide
+from app.core.rate_limiting import RateLimit
 
 from app.core.container import Container
 from app.core.jwt_security import JWTBearer
@@ -38,7 +39,10 @@ router = APIRouter(
     "",
     summary="Search users with pagination",
     response_model=PagedData[UserSearchResponse],
-    dependencies=[Depends(require_permission(AppPermissions.USERS_SEARCH))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.USERS_SEARCH)),
+        Depends(RateLimit(requests=60, window=60, key_prefix="users_search")),
+    ]
 )
 @inject
 async def search(
@@ -66,7 +70,10 @@ async def search(
     summary="Create a new user",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_permission(AppPermissions.USERS_CREATE))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.USERS_CREATE)),
+        Depends(RateLimit(requests=10, window=60, key_prefix="users_create")),
+    ]
 )
 @inject
 async def create(
@@ -89,7 +96,10 @@ async def create(
     "/{id}",
     summary="Get user by Id",
     response_model=UserResponse,
-    dependencies=[Depends(require_permission(AppPermissions.USERS_VIEW))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.USERS_VIEW)),
+        Depends(RateLimit(requests=120, window=60, key_prefix="users_view")),
+    ]
 )
 @inject
 async def get_by_id(
@@ -112,7 +122,10 @@ async def get_by_id(
     "/{id}",
     summary="Update user",
     response_model=UserResponse,
-    dependencies=[Depends(require_permission(AppPermissions.USERS_UPDATE))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.USERS_UPDATE)),
+        Depends(RateLimit(requests=20, window=60, key_prefix="users_update")),
+    ]
 )
 @inject
 async def update(
@@ -135,7 +148,10 @@ async def update(
     "/{id}/roles",
     summary="Get user roles",
     response_model=list[UserRoleResponse],
-    dependencies=[Depends(require_permission(AppPermissions.USERS_VIEW))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.USERS_VIEW)),
+        Depends(RateLimit(requests=120, window=60, key_prefix="users_roles")),
+    ]
 )
 @inject
 async def get_user_roles(
@@ -158,7 +174,10 @@ async def get_user_roles(
     "/{id}/status",
     summary="Update user status",
     response_model=UserResponse,
-    dependencies=[Depends(require_permission(AppPermissions.USERS_UPDATE))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.USERS_UPDATE)),
+        Depends(RateLimit(requests=20, window=60, key_prefix="users_update_status")),
+    ]
 )
 @inject
 async def update_status(
@@ -183,7 +202,10 @@ async def update_status(
     "/{id}",
     summary="Delete user",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission(AppPermissions.USERS_DELETE))]
+    dependencies=[
+        Depends(require_permission(AppPermissions.USERS_DELETE)),
+        Depends(RateLimit(requests=5, window=60, key_prefix="users_delete")),
+    ]
 )
 @inject
 async def delete(

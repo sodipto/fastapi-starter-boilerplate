@@ -2,6 +2,7 @@ from uuid import UUID
 from fastapi import APIRouter
 from fastapi.params import Depends
 from dependency_injector.wiring import inject, Provide
+from app.core.rate_limiting import RateLimit
 
 from app.core.container import Container
 from app.core.identity import get_current_user
@@ -20,7 +21,12 @@ router = APIRouter(
 )
 
 
-@router.get("", summary="Get current user profile", response_model=UserResponse)
+@router.get(
+    "",
+    summary="Get current user profile",
+    response_model=UserResponse,
+    dependencies=[Depends(RateLimit(requests=120, window=60, key_prefix="profile_get"))]
+)
 @inject
 async def get_profile(
     user_id: UUID = Depends(get_current_user),
@@ -33,7 +39,12 @@ async def get_profile(
     return await profile_service.get_profile(user_id)
 
 
-@router.put("", summary="Update current user profile", response_model=UserResponse)
+@router.put(
+    "",
+    summary="Update current user profile",
+    response_model=UserResponse,
+    dependencies=[Depends(RateLimit(requests=30, window=60, key_prefix="profile_update"))]
+)
 @inject
 async def update_profile(
     request: UpdateProfileRequest,
@@ -52,7 +63,12 @@ async def update_profile(
     return await profile_service.update_profile(user_id=user_id, request=request)
 
 
-@router.put("/password", summary="Change current user password", response_model=ResponseMeta)
+@router.put(
+    "/password",
+    summary="Change current user password",
+    response_model=ResponseMeta,
+    dependencies=[Depends(RateLimit(requests=3, window=60, key_prefix="profile_change_password"))]
+)
 @inject
 async def change_password(
     request: ChangePasswordRequest,

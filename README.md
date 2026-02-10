@@ -1,6 +1,6 @@
 ﻿# FastAPI Starter Boilerplate
 
-A production-ready FastAPI boilerplate with JWT authentication, role-based access control, multi-database support, and modular architecture.
+A production-ready FastAPI boilerplate with JWT authentication, role-based access control, multi-database support, rate limiting and modular architecture.
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.116.1-009688?style=flat-square&logo=fastapi)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)

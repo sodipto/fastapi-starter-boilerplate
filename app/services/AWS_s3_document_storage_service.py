@@ -315,15 +315,29 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
     
     def _build_file_url(self, file_path: str) -> str:
         """
-        Build the file URL using CDN URL if available, otherwise use S3 bucket URL.
+        Build the file URL using CDN URL if available, otherwise generate a presigned URL.
         
         Args:
             file_path: The file path/key in S3
             
         Returns:
-            The complete URL to access the file
+            The complete URL to access the file (CDN URL or presigned URL)
         """
         if self.cdn_url:
             return f"{self.cdn_url}/{file_path}"
         else:
-            return f"https://{self.bucket_name}.s3.{settings.S3_AWS_REGION}.amazonaws.com/{file_path}"
+            # Generate presigned URL for secure, time-limited access
+            try:
+                presigned_url = self.s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={
+                        'Bucket': self.bucket_name,
+                        'Key': file_path
+                    },
+                    ExpiresIn=settings.PRESIGNED_URL_EXPIRE_MINUTES * 60  # Convert to seconds
+                )
+                return presigned_url
+            except ClientError as e:
+                logger.error(f"Error generating presigned URL: {e}")
+                # Fallback to standard S3 URL (may not be publicly accessible)
+                return f"https://{self.bucket_name}.s3.{settings.S3_AWS_REGION}.amazonaws.com/{file_path}"

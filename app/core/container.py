@@ -26,7 +26,7 @@ from app.services.profile_service import ProfileService
 from app.services.token_service import TokenService
 from app.services.role_service import RoleService
 from app.services.permission_service import PermissionService
-from app.services.AWS_s3_document_storage_service import AwsS3DocumentStorageService
+from app.services.storage_service_factory import StorageServiceFactory
 from app.services.email_template_service import EmailTemplateService
 from app.services.cache.cache_resource import cache_service_resource
 from app.services.rate_limit_service import RateLimitService
@@ -139,7 +139,7 @@ class Container(containers.DeclarativeContainer):
         email_template_service=email_template_service
     )
 
-    document_storage_service = providers.Singleton(AwsS3DocumentStorageService)
+    document_storage_service = providers.Singleton(StorageServiceFactory.create)
 
     scheduler_service = providers.Singleton(SchedulerService)
 

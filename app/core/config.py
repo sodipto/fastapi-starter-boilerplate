@@ -34,12 +34,24 @@ class Settings(BaseSettings):
     MAIL_USE_SSL: bool = False
     ENABLE_EMAIL_LOGS: bool = True
 
-    # AWS S3 settings
-    S3_AWS_ACCESS_KEY_ID: str
-    S3_AWS_SECRET_ACCESS_KEY: str
-    S3_AWS_REGION: str
-    S3_BUCKET_NAME: str
+    # Storage provider settings
+    STORAGE_PROVIDER: str = "aws"  # Options: aws, minio
+    PRESIGNED_URL_EXPIRE_MINUTES: int = 10  # Expiration time for presigned URLs when CDN is not configured
+    
+    # AWS S3 settings (used when STORAGE_PROVIDER=aws)
+    S3_AWS_ACCESS_KEY_ID: str | None = None
+    S3_AWS_SECRET_ACCESS_KEY: str | None = None
+    S3_AWS_REGION: str | None = None
+    S3_BUCKET_NAME: str | None = None
     S3_CDN_URL: str | None = None
+    
+    # MinIO settings (used when STORAGE_PROVIDER=minio)
+    MINIO_ENDPOINT: str | None = None  # e.g., localhost:9000 or minio.example.com:9000
+    MINIO_ACCESS_KEY: str | None = None
+    MINIO_SECRET_KEY: str | None = None
+    MINIO_BUCKET_NAME: str | None = None
+    MINIO_USE_SSL: bool = False
+    MINIO_CDN_URL: str | None = None
 
     # Cache settings
     CACHE_TYPE: str = "memory"  # Options: memory, redis

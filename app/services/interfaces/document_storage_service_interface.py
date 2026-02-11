@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import IO
 from fastapi import UploadFile
 from app.schema.response.meta import ResponseMeta
+from app.schema.response.document import DocumentStorageResponse
 
 
 class DocumentStorageServiceInterface(ABC):
@@ -13,7 +14,7 @@ class DocumentStorageServiceInterface(ABC):
         file: UploadFile,
         file_path: str,
         allowed_extensions: list[str]
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Upload a file to storage.
         
@@ -33,7 +34,7 @@ class DocumentStorageServiceInterface(ABC):
         stream: IO[bytes],
         file_path: str,
         content_type: str
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Upload a file from a stream to storage.
         
@@ -68,7 +69,7 @@ class DocumentStorageServiceInterface(ABC):
         self,
         source_key: str,
         destination_key: str
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Copy a file from one location to another within storage.
         
@@ -86,7 +87,7 @@ class DocumentStorageServiceInterface(ABC):
         self,
         source_key: str,
         destination_key: str
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Move a file from one location to another within storage.
         

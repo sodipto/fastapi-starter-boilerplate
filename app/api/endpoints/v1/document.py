@@ -1,7 +1,7 @@
 from uuid import UUID
 import uuid
 import os
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from dependency_injector.wiring import inject, Provide
 from app.core.rate_limiting import RateLimit
 from app.core.container import Container
@@ -29,6 +29,7 @@ router = APIRouter(prefix="/documents", tags=["Documents"])
 @inject
 async def upload_file(
     file: UploadFile = File(...),
+    file_path: str = Form(...),
     document_storage_service: DocumentStorageServiceInterface = Depends(Provide[Container.document_storage_service])
 ):
     """
@@ -55,21 +56,31 @@ async def upload_file(
         ALLOWED_PDF_EXTENSIONS
     )
     
-    # Generate file path with uuid (filename_uuid.extension)
+    # `file_path` is required as a directory/prefix (e.g., "images" or "images/sub").
+    provided_path = (file_path or "").strip()
+    if not provided_path:
+        raise BadRequestException("file_path", "file_path is required")
+
+    # Normalize prefix and append a UUID-based filename to avoid collisions
+    provided_path = provided_path.rstrip("/")
     filename, file_extension = os.path.splitext(file.filename)
     unique_filename = f"{filename}_{uuid.uuid4()}{file_extension}"
-    file_path = f"images/{unique_filename}"
-    
-    # Upload file
-    file_url = await document_storage_service.upload_file(
+    final_path = f"{provided_path}/{unique_filename}"
+
+    # Upload file using constructed final_path
+    result = await document_storage_service.upload_file(
         file=file,
-        file_path=file_path,
+        file_path=final_path,
         allowed_extensions=allowed_extensions
     )
-    
+
+    url = result.url if result else None
+    key = result.key if result and result.key else final_path
+
     return DocumentOperationResponse(
         message="File uploaded successfully",
-        url=file_url
+        url=url,
+        key=key
     )
 
 @router.post(
@@ -96,11 +107,16 @@ async def copy_file(
     if not destination_key:
         raise BadRequestException("destination_key", "Destination key is required")
     
-    file_url = await document_storage_service.copy(source_key, destination_key)
+    if source_key.lower() == destination_key.lower():
+        raise BadRequestException("destination_key", "Destination key must be different from source key")
     
+    result = await document_storage_service.copy(source_key, destination_key)
+    url = result.url if result else None
+
     return DocumentOperationResponse(
         message="File copied successfully",
-        url=file_url
+        url=url,
+        key=destination_key
     )
 
 
@@ -128,11 +144,13 @@ async def move_file(
     if not destination_key:
         raise BadRequestException("destination_key", "Destination key is required")
     
-    file_url = await document_storage_service.move(source_key, destination_key)
-    
+    result = await document_storage_service.move(source_key, destination_key)
+    url = result.url if result else None
+
     return DocumentOperationResponse(
         message="File moved successfully",
-        url=file_url
+        url=url,
+        key=destination_key
     )
 
 @router.delete(

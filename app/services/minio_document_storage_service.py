@@ -16,6 +16,7 @@ from fastapi import UploadFile
 
 from app.core.config import settings
 from app.services.interfaces.document_storage_service_interface import DocumentStorageServiceInterface
+from app.schema.response.document import DocumentStorageResponse
 from app.schema.response.meta import ResponseMeta
 from app.utils.exception_utils import BadRequestException, NotFoundException
 
@@ -66,7 +67,7 @@ class MinioDocumentStorageService(DocumentStorageServiceInterface):
         file: UploadFile,
         file_path: str,
         allowed_extensions: list[str]
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Upload a file to MinIO.
         
@@ -128,8 +129,8 @@ class MinioDocumentStorageService(DocumentStorageServiceInterface):
             # Reset file position for potential reuse
             await file.seek(0)
             
-            # Return CDN URL or MinIO bucket URL
-            return self._build_file_url(file_path)
+            # Return structured result with URL and key
+            return DocumentStorageResponse(url=self._build_file_url(file_path), key=file_path)
             
         except S3Error as e:
             logger.error(f"Error uploading file to MinIO: {e}")
@@ -143,7 +144,7 @@ class MinioDocumentStorageService(DocumentStorageServiceInterface):
         stream: IO[bytes],
         file_path: str,
         content_type: str
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Upload a file from a stream to MinIO.
         
@@ -176,8 +177,8 @@ class MinioDocumentStorageService(DocumentStorageServiceInterface):
                 content_type=content_type
             )
             
-            # Return CDN URL or MinIO bucket URL
-            return self._build_file_url(file_path)
+            # Return structured result with URL and key
+            return DocumentStorageResponse(url=self._build_file_url(file_path), key=file_path)
             
         except S3Error as e:
             logger.error(f"Error uploading stream to MinIO: {e}")
@@ -241,7 +242,7 @@ class MinioDocumentStorageService(DocumentStorageServiceInterface):
         self,
         source_key: str,
         destination_key: str
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Copy a file from one location to another within MinIO.
         
@@ -284,8 +285,8 @@ class MinioDocumentStorageService(DocumentStorageServiceInterface):
                 copy_source
             )
             
-            # Return URL of the copied file
-            return self._build_file_url(destination_key)
+            # Return structured result with URL and key
+            return DocumentStorageResponse(url=self._build_file_url(destination_key), key=destination_key)
             
         except S3Error as e:
             logger.error(f"Error copying file in MinIO: {e}")
@@ -326,7 +327,11 @@ class MinioDocumentStorageService(DocumentStorageServiceInterface):
                 stripped_source_key
             )
             
-            return copied_url
+            # copied_url may be a DocumentStorageResponse from copy; normalize
+            if isinstance(copied_url, DocumentStorageResponse):
+                copied_url.key = destination_key
+                return copied_url
+            return DocumentStorageResponse(url=copied_url, key=destination_key)
             
         except (BadRequestException, NotFoundException):
             raise

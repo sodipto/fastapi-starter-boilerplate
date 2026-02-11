@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from fastapi import UploadFile
 from app.core.config import settings
 from app.services.interfaces.document_storage_service_interface import DocumentStorageServiceInterface
+from app.schema.response.document import DocumentStorageResponse
 from app.schema.response.meta import ResponseMeta
 from app.utils.exception_utils import BadRequestException, NotFoundException
 
@@ -34,7 +35,7 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
         file: UploadFile,
         file_path: str,
         allowed_extensions: list[str]
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Upload a file to AWS S3.
         
@@ -94,8 +95,8 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
             # Reset file position for potential reuse
             await file.seek(0)
             
-            # Return CDN URL or S3 bucket URL
-            return self._build_file_url(file_path)
+            # Return structured result with URL and key
+            return DocumentStorageResponse(url=self._build_file_url(file_path), key=file_path)
             
         except ClientError as e:
             # Log error in production
@@ -110,7 +111,7 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
         stream: IO[bytes],
         file_path: str,
         content_type: str
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Upload a file from a stream to AWS S3.
         
@@ -136,8 +137,8 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
                 ExtraArgs={"ContentType": content_type}
             )
             
-            # Return CDN URL or S3 bucket URL
-            return self._build_file_url(file_path)
+            # Return structured result with URL and key
+            return DocumentStorageResponse(url=self._build_file_url(file_path), key=file_path)
             
         except ClientError as e:
             logger.error(f"Error uploading stream to S3: {e}")
@@ -206,7 +207,7 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
         self,
         source_key: str,
         destination_key: str
-    ) -> str | None:
+    ) -> DocumentStorageResponse | None:
         """
         Copy a file from one location to another within AWS S3.
         
@@ -254,8 +255,8 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
                 Key=destination_key
             )
             
-            # Return CDN URL of the copied file
-            return self._build_file_url(destination_key)
+            # Return structured result with URL and key
+            return DocumentStorageResponse(url=self._build_file_url(destination_key), key=destination_key)
             
         except ClientError as e:
             logger.error(f"Error copying file in S3: {e}")
@@ -298,7 +299,11 @@ class AwsS3DocumentStorageService(DocumentStorageServiceInterface):
                 Key=stripped_source_key
             )
             
-            return copied_url
+            # copied_url may be a DocumentStorageResponse from copy; normalize
+            if isinstance(copied_url, DocumentStorageResponse):
+                copied_url.key = destination_key
+                return copied_url
+            return DocumentStorageResponse(url=copied_url, key=destination_key)
             
         except BadRequestException:
             # Re-raise BadRequestException from copy method

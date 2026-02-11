@@ -1,8 +1,9 @@
 from pydantic import BaseModel, Field, field_validator
 from pydantic_core import PydanticCustomError
+from app.core.config import settings
 from typing import Annotated, Optional
 
-from app.core.constants.validation import EMAIL_REGEX, ALPHANUMERIC_REGEX
+from app.core.constants.validation import EMAIL_REGEX, ALPHANUMERIC_REGEX, validate_password_with_policy
 
 
 class UpdateProfileRequest(BaseModel):
@@ -31,25 +32,36 @@ class UpdateProfileRequest(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     """Schema for changing user password."""
-    current_password: Annotated[str, Field(description="Current password")]
-    new_password: Annotated[str, Field(description="New password must be between 6 and 8 characters")]
-    confirm_password: Annotated[str, Field(description="Password confirmation")]
+    current_password: Annotated[str, Field(description="Current password must be at least 8 characters")]
+    new_password: Annotated[str, Field(description="New password must be at least 8 characters")]
+    confirm_password: Annotated[str, Field(description="Confirm new password must be at least 8 characters")]
     
-    @field_validator("current_password", "new_password", "confirm_password")
+    @field_validator("current_password")
     @classmethod
-    def check_password_length(cls, v: str) -> str:
-        if not (6 <= len(v) <= 8):
-            raise PydanticCustomError(
-                "password_length",
-                "Password must be between 6 and 8 characters!"
-            )
-        return v
+    def check_current_password(cls, v: str) -> str:
+        return validate_password_with_policy(
+            v, min_length=settings.PASSWORD_MIN_LENGTH, field_name="current_password"
+        )
+
+    @field_validator("new_password")
+    @classmethod
+    def check_new_password(cls, v: str) -> str:
+        return validate_password_with_policy(
+            v, min_length=settings.PASSWORD_MIN_LENGTH, field_name="new_password"
+        )
+
+    @field_validator("confirm_password")
+    @classmethod
+    def check_confirm_password(cls, v: str) -> str:
+        return validate_password_with_policy(
+            v, min_length=settings.PASSWORD_MIN_LENGTH, field_name="confirm_password"
+        )
     
     class Config:
         json_schema_extra = {
             "example": {
-                "current_password": "oldPass1",
-                "new_password": "newPass1",
-                "confirm_password": "newPass1"
+                "current_password": "OldPass1@",
+                "new_password": "NewPass1@",
+                "confirm_password": "NewPass1@"
             }
         }

@@ -4,6 +4,8 @@ from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from pydantic_core import PydanticCustomError
+from app.core.constants.validation import validate_password_with_policy
+from app.core.config import settings
 
 
 class UserRequest(BaseModel):
@@ -45,12 +47,7 @@ class UserRequest(BaseModel):
     def validate_password(cls, v: str | None) -> str | None:
         if v is None:
             return None
-        if len(v) < 8:
-            raise PydanticCustomError(
-                'password_too_short',
-                'Password must be at least 8 characters long'
-            )
-        return v
+        return validate_password_with_policy(v, min_length=settings.PASSWORD_MIN_LENGTH, field_name='password')
 
 
 class UserUpdateRequest(BaseModel):

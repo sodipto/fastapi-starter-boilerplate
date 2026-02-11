@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     
     # Account settings
     REQUIRE_EMAIL_CONFIRMED_ACCOUNT: bool = True
+    SECURE_PASSWORD: bool = False  # If True, use a stricter regex for password validation (uppercase, lowercase, digit, special)
+    PASSWORD_MIN_LENGTH: int = 8  # Minimum allowed password length
     FORGOT_PASSWORD_VERIFICATION_CODE_EXPIRE_MINUTES: int = 15
     EMAIL_VERIFICATION_CODE_EXPIRE_MINUTES: int = 60
     FRONTEND_URL: str = "http://localhost:3000"  # Frontend application URL
@@ -57,8 +59,6 @@ class Settings(BaseSettings):
     CACHE_TYPE: str = "memory"  # Options: memory, redis
     REDIS_URL: str = "redis://localhost:6379"
     REDIS_PASSWORD: str | None = None
-    REDIS_DB: int = 0
-    REDIS_SSL: bool = False
     
     # Rate limiting settings
     RATE_LIMIT_ENABLED: bool = True

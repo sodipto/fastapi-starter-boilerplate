@@ -66,7 +66,7 @@ class ApplicationSeeder:
         user = User(
             email="sa@example.com",
             full_name="Super Admin",
-            password=get_password_hash("123456"),
+            password=get_password_hash("Sa123456@"),
             is_active=True,
             email_confirmed=True,
         )

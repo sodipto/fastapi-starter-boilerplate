@@ -32,8 +32,6 @@ class JWTBearer(HTTPBearer):
                 payload = decode_jwt(credentials.credentials)
                 user_id = payload.get("user_id") if isinstance(payload, dict) else None
                 if user_id:
-                    print(f"Setting audit user context to {user_id}")
-                    print(f"Path accessed: {request.url.path}")
                     set_current_audit_user(str(user_id))
             except Exception:
                 # don't block authentication flow on audit context errors
@@ -45,7 +43,6 @@ class JWTBearer(HTTPBearer):
     def verify_jwt(self, jwt_token: str) -> bool:
         is_token_valid: bool = False
         try:
-            print(f"Decoding JWT token: --------")
             payload = decode_jwt(jwt_token)
         except Exception as e:
             payload = None

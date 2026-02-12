@@ -75,6 +75,7 @@ def _collect_changes(session):
                 "type": "Insert",
                 "table": state.mapper.local_table.name,
                 "primary_key": pk,
+                "_obj": obj,
                 "old": None,
                 "new": new_values,
                 "columns": list(new_values.keys()),
@@ -152,6 +153,27 @@ def before_flush(session, flush_context, instances):
         _logger.error(f"Error collecting audit changes: {ex}")
 
 
+@event.listens_for(Session, "after_flush")
+def after_flush(session, flush_context):
+    # Populate primary keys for newly-inserted objects (DB may assign PKs on flush)
+    try:
+        entries = session.info.get("audit_entries", [])
+        if not entries:
+            return
+        for e in list(entries):
+            if e.get("type") == "Insert" and e.get("_obj") is not None:
+                try:
+                    obj = e.pop("_obj")
+                    state = inspect(obj)
+                    pk = {col.name: _truncate(getattr(obj, col.key, None)) for col in state.mapper.primary_key}
+                    e["primary_key"] = pk
+                except Exception:
+                    # keep original pk if anything goes wrong
+                    continue
+    except Exception as ex:
+        _logger.error(f"Error populating PKs after flush: {ex}")
+
+
 @event.listens_for(Session, "after_commit")
 def after_commit(session):
     if not settings.AUDIT_ENABLED:
@@ -160,7 +182,11 @@ def after_commit(session):
     if not entries:
         return
 
-    user_id = session.info.get("user_id") or get_current_audit_user()
+    user_id = get_current_audit_user()
+
+    # This keeps the audit log free of anonymous/system entries when not desired.
+    if not user_id:
+        return
 
     async def _persist_entries(entries, user_id):
         try:

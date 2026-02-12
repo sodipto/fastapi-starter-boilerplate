@@ -34,7 +34,7 @@ from uuid import UUID
 from fastapi import Depends, status
 from app.utils.exception_utils import ForbiddenException
 
-from app.core.identity import get_current_user
+from app.core.identity import get_current_user_id
 from app.core.rbac.permission_definition import PermissionDefinition
 from app.services.interfaces.permission_service_interface import IPermissionService
 from dependency_injector.wiring import inject, Provide
@@ -75,7 +75,7 @@ class PermissionChecker:
     @inject
     async def __call__(
         self,
-        user_id: UUID = Depends(get_current_user),
+        user_id: UUID = Depends(get_current_user_id),
         permission_service: IPermissionService = Depends(
             Provide["permission_service"]
         )
@@ -234,7 +234,7 @@ def create_permission_dependency(permission: PermissionDefinition) -> Callable:
     """
     @inject
     async def permission_dependency(
-        user_id: UUID = Depends(get_current_user),
+        user_id: UUID = Depends(get_current_user_id),
         permission_service: IPermissionService = Depends(
             Provide["permission_service"]
         )
@@ -280,7 +280,7 @@ class CurrentUserWithPermissions:
 
 @inject
 async def get_current_user_with_permissions(
-    user_id: UUID = Depends(get_current_user),
+    user_id: UUID = Depends(get_current_user_id),
     permission_service: IPermissionService = Depends(
         Provide["permission_service"]
     )

@@ -5,7 +5,7 @@ from dependency_injector.wiring import inject, Provide
 from app.core.rate_limiting import RateLimit
 
 from app.core.container import Container
-from app.core.identity import get_current_user
+from app.core.identity import get_current_user_id
 from app.core.jwt_security import JWTBearer
 from app.schema.response.meta import ResponseMeta
 from app.schema.response.user import UserResponse
@@ -29,7 +29,7 @@ router = APIRouter(
 )
 @inject
 async def get_profile(
-    user_id: UUID = Depends(get_current_user),
+    user_id: UUID = Depends(get_current_user_id),
     profile_service: IProfileService = Depends(Provide[Container.profile_service])
 ):
     """
@@ -48,7 +48,7 @@ async def get_profile(
 @inject
 async def update_profile(
     request: UpdateProfileRequest,
-    user_id: UUID = Depends(get_current_user),
+    user_id: UUID = Depends(get_current_user_id),
     profile_service: IProfileService = Depends(Provide[Container.profile_service])
 ):
     """
@@ -72,7 +72,7 @@ async def update_profile(
 @inject
 async def change_password(
     request: ChangePasswordRequest,
-    user_id: UUID = Depends(get_current_user),
+    user_id: UUID = Depends(get_current_user_id),
     profile_service: IProfileService = Depends(Provide[Container.profile_service])
 ):
     """

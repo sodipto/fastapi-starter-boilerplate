@@ -151,6 +151,37 @@ class RoleRepository(BaseRepository[Role], IRoleRepository):
         # Return updated claims
         return await self.get_role_claims(role_id)
 
+    async def sync_role_claims_in_session(self, session: AsyncSession, role_id: uuid.UUID, claim_names: list[str]) -> None:
+        """Sync role claims using an existing session (does not commit)."""
+        target_claim_names = set(claim_names)
+        result = await session.execute(
+            select(RoleClaim.claim_name).where(
+                RoleClaim.role_id == str(role_id),
+                RoleClaim.claim_type == PermissionClaimType.PERMISSION.value,
+            )
+        )
+        existing_claim_names = set(result.scalars().all())
+
+        claims_to_add = target_claim_names - existing_claim_names
+        claims_to_remove = existing_claim_names - target_claim_names
+
+        if claims_to_remove:
+            await session.execute(
+                delete(RoleClaim).where(
+                    RoleClaim.role_id == str(role_id),
+                    RoleClaim.claim_name.in_(claims_to_remove),
+                    RoleClaim.claim_type == PermissionClaimType.PERMISSION.value,
+                )
+            )
+
+        for claim_name in claims_to_add:
+            new_claim = RoleClaim(
+                role_id=role_id,
+                claim_type=PermissionClaimType.PERMISSION.value,
+                claim_name=claim_name,
+            )
+            session.add(new_claim)
+
     async def has_users(self, role_id: uuid.UUID) -> tuple[bool, int]:
         """Check if role is assigned to any users.
         

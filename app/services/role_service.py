@@ -69,26 +69,29 @@ class RoleService(IRoleService):
                 f"Role with name '{role_request.name}' already exists"
             )
 
-        # Create new role
+        trimmed_name = role_request.name.strip()
+        normalized = trimmed_name.upper().replace(" ", "_")
+
         # Create new role
         role = Role(
-            name=role_request.name,
-            normalized_name=role_request.name.upper(),
-            description=role_request.description,
-            is_system=False
+            name=trimmed_name,
+            normalized_name=normalized,
+            description=role_request.description.strip() if role_request.description is not None else None,
+            is_system=False,
         )
 
-        created_role = await self.role_repository.create(role, auto_commit=False)
-
-        # Sync claims if provided
-        if role_request.claims:
-            await self.role_repository.sync_role_claims(
-                created_role.id, 
-                role_request.claims,
-                auto_commit=False
-            )
+        # Ensure checks use trimmed name
         
-        await self.role_repository.commit()
+        # Create role and sync claims in a single session/transaction for atomicity
+        async with self.role_repository.db_factory() as session:
+            session.add(role)
+            await session.flush()
+            if role_request.claims:
+                await self.role_repository.sync_role_claims_in_session(
+                    session, role.id, role_request.claims
+                )
+            await session.commit()
+            created_role = role
 
         # Reload role to get claims
         created_role = await self.role_repository.get_by_id(created_role.id)
@@ -149,21 +152,22 @@ class RoleService(IRoleService):
                 f"Role with name '{role_request.name}' already exists"
             )
 
-        # Update role fields
-        role.name = role_request.name
-        role.normalized_name = role_request.name.upper()
-        role.description = role_request.description
+        # Trim incoming name and update normalized_name (spaces -> underscores)
+        trimmed_name = role_request.name.strip()
+        role.name = trimmed_name
+        role.normalized_name = trimmed_name.upper().replace(" ", "_")
+        role.description = role_request.description.strip() if role_request.description is not None else None
 
-        updated_role = await self.role_repository.update(role, auto_commit=False)
-
-        # Sync claims (add new, remove old, keep existing)
-        await self.role_repository.sync_role_claims(
-            role_id, 
-            role_request.claims,
-            auto_commit=False
-        )
-        
-        await self.role_repository.commit()
+        # Update role and sync claims in a single session/transaction for atomicity
+        async with self.role_repository.db_factory() as session:
+            session.add(role)
+            await session.flush()
+            if role_request.claims:
+                await self.role_repository.sync_role_claims_in_session(
+                    session, role_id, role_request.claims
+                )
+            await session.commit()
+            updated_role = role
 
         # Reload role to get updated claims
         updated_role = await self.role_repository.get_by_id(role_id)

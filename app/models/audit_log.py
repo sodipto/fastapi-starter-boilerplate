@@ -1,8 +1,10 @@
 from datetime import datetime, timezone
 import uuid
-from sqlalchemy import Column, String, DateTime, JSON
+from sqlalchemy import Column, String, DateTime, JSON, ForeignKey
+from sqlalchemy.orm import relationship
 from app.core.database.base import Base
 from app.core.database.schema import DbSchemas
+from app.models.types import GUID
 
 
 class AuditLog(Base):
@@ -10,7 +12,6 @@ class AuditLog(Base):
     __table_args__ = {"schema": DbSchemas.logger}
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String(36), nullable=True)
     type = Column(String(32), nullable=False)  # Insert, Update, Delete
     table_name = Column(String(255), nullable=True)
     date_time = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
@@ -18,3 +19,13 @@ class AuditLog(Base):
     new_values = Column(JSON, nullable=True)
     affected_columns = Column(JSON, nullable=True)
     primary_key = Column(JSON, nullable=True)
+
+    user_id = Column(
+        GUID(),
+        ForeignKey(f"{DbSchemas.identity}.users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # optional relationship to `User` for convenient access to actor info
+    user = relationship("User", backref="audit_logs")

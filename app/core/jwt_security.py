@@ -32,7 +32,9 @@ class JWTBearer(HTTPBearer):
                 payload = decode_jwt(credentials.credentials)
                 user_id = payload.get("user_id") if isinstance(payload, dict) else None
                 if user_id:
-                    set_current_audit_user(str(user_id))
+                    # Pass the raw value (string or UUID) to the audit context
+                    # The audit context will validate/convert to uuid.UUID.
+                    set_current_audit_user(user_id)
             except Exception:
                 # don't block authentication flow on audit context errors
                 pass

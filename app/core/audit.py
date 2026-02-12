@@ -182,9 +182,10 @@ def after_commit(session):
     if not entries:
         return
 
+    # Prefer session-attached user_id (set via set_session_user), fall back to contextvar
     user_id = get_current_audit_user()
 
-    # This keeps the audit log free of anonymous/system entries when not desired.
+    # Validate user_id: skip if missing or explicitly anonymous
     if not user_id:
         return
 

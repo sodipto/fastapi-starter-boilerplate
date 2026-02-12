@@ -22,6 +22,7 @@ from app.core.middlewares.rate_limit_middleware import RateLimitMiddleware
 from app.core.open_api import custom_openapi
 from app.core.seeders.application import ApplicationSeeder
 from app.jobs import register_all_jobs
+import app.core.audit  # registers audit event listeners
 
 
 @asynccontextmanager

@@ -66,6 +66,12 @@ class Settings(BaseSettings):
     RATE_LIMIT_WINDOW_SECONDS: int = 1  # Window size (1 = per second, 60 = per minute)
     RATE_LIMIT_EXEMPT_PATHS: list[str] = ["/health", "/swagger", "/redoc", "/openapi.json"]  # Paths exempt from rate limiting
     
+    # Audit settings
+    AUDIT_ENABLED: bool = True
+    # Comma-separated list in env or Python list - fields to exclude or mask from audit payloads
+    AUDIT_SENSITIVE_FIELDS: list[str] = ["password", "refresh_token", "tokens"]
+    
+    
     # Seq logging settings
     SEQ_ENABLED: bool = False
     SEQ_SERVER_URL: str = "http://localhost:5341"

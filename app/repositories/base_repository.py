@@ -56,14 +56,20 @@ class BaseRepository(IBaseRepository[T], Generic[T]):
 
     async def delete(self, id: uuid.UUID, auto_commit: bool = True) -> bool:
         async with self.db_factory() as session:
+            # Load the entity first so ORM-level delete is recorded by session
             result = await session.execute(
-                sql_delete(self.model).where(self.model.id == str(id))
+                select(self.model).where(self.model.id == str(id))
             )
+            entity = result.scalars().first()
+            if not entity:
+                return False
+            # Use ORM delete so audit event listeners can capture old values
+            await session.delete(entity)
             if auto_commit:
                 await session.commit()
             else:
                 await session.flush()
-            return result.rowcount > 0
+            return True
 
     async def commit(self) -> None:
         async with self.db_factory() as session:

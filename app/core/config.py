@@ -1,5 +1,6 @@
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -65,13 +66,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_REQUESTS: int = 100  # Max requests allowed per window
     RATE_LIMIT_WINDOW_SECONDS: int = 1  # Window size (1 = per second, 60 = per minute)
     RATE_LIMIT_EXEMPT_PATHS: list[str] = ["/health", "/swagger", "/redoc", "/openapi.json"]  # Paths exempt from rate limiting
-    
-    # Audit settings
-    AUDIT_ENABLED: bool = True
-    # Comma-separated list in env or Python list - fields to exclude or mask from audit payloads
-    AUDIT_SENSITIVE_FIELDS: list[str] = ["password", "refresh_token", "tokens"]
-    
-    
+     
     # Seq logging settings
     SEQ_ENABLED: bool = False
     SEQ_SERVER_URL: str = "http://localhost:5341"
@@ -90,5 +85,22 @@ class Settings(BaseSettings):
     )
     OPENAPI_VERSION: str = "1.0.0"
     OPENAPI_ENABLED: bool = True
+
+    # Audit settings
+    AUDIT_ENABLED: bool = True
+    # Comma-separated list in env or Python list - fields to exclude or mask from audit payloads
+    # Accept either a comma-separated string or a list in environment.
+    AUDIT_SENSITIVE_FIELDS: str | list[str] = "password,refresh_token,tokens"
+
+    @field_validator("AUDIT_SENSITIVE_FIELDS", mode="before")
+    def _split_audit_sensitive_fields(cls, v):
+        """Normalize `AUDIT_SENSITIVE_FIELDS` into a Python list.
+
+        - If the env provides a comma-separated string, split and strip items.
+        - If already a list, return as-is.
+        """
+        if isinstance(v, str):
+            return [item.strip() for item in v.split(",") if item.strip()]
+        return v
 
 settings = Settings()

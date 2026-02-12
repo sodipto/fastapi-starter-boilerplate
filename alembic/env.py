@@ -82,6 +82,26 @@ def render_item(type_, obj, autogen_context):
     return False
 
 
+# Get all schema names from DbSchemas class
+def get_target_schemas():
+    """Get all schema names defined in DbSchemas."""
+    from app.core.database.schema import DbSchemas
+    return {value for key, value in vars(DbSchemas).items() 
+            if not key.startswith("__") and isinstance(value, str)}
+
+
+def include_name(name, type_, parent_names):
+    """
+    Filter function for autogenerate to include only our target schemas.
+    This ensures Alembic properly detects tables in custom schemas.
+    """
+    if type_ == "schema":
+        # Include our target schemas plus default schema for version table
+        target_schemas = get_target_schemas()
+        return name in target_schemas or name == default_schema
+    return True
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -107,6 +127,24 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+def is_autogenerate_revision() -> bool:
+    """Check if we're generating a revision (autogenerate) vs running actual migrations."""
+    cmd_opts = config.cmd_opts
+    if cmd_opts is None:
+        return False
+    
+    # Check if this is a revision command with autogenerate flag
+    cmd = getattr(cmd_opts, 'cmd', None)
+    if cmd is None:
+        return False
+    
+    # Get the command function name
+    cmd_func_name = cmd[0].__name__ if isinstance(cmd, tuple) else getattr(cmd, '__name__', str(cmd))
+    
+    # Check if it's a revision command (used for autogenerate)
+    return cmd_func_name == 'revision'
+
+
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
@@ -119,15 +157,17 @@ def run_migrations_online() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
+    
+    is_autogenerate = is_autogenerate_revision()
 
     with connectable.connect() as connection:
-        # Only ensure schemas exist if the provider supports them
+        # Ensure schemas exist for proper autogenerate comparison
+        # This is needed for both autogenerate and actual migrations
         if supports_schemas:
             logger.info(f"Ensuring schemas exist for {db_provider.value}")
             with connection.begin():
                 ensure_schemas_exist(connection, db_provider)
-        else:
-            logger.info(f"Skipping schema creation for {db_provider.value} (not supported)")
+        
         # Configure context based on schema support
         context_config = {
             "connection": connection,
@@ -136,11 +176,25 @@ def run_migrations_online() -> None:
         }
         if supports_schemas:
             context_config["include_schemas"] = True
+            context_config["include_name"] = include_name
             if default_schema:
                 context_config["version_table_schema"] = default_schema
+        
         context.configure(**context_config)
-        with context.begin_transaction():
-            context.run_migrations()
+        
+        if is_autogenerate:
+            # For autogenerate, run migrations in a transaction that gets rolled back
+            # This prevents creating the alembic_version table while still allowing
+            # the autogenerate comparison to work
+            trans = connection.begin()
+            try:
+                context.run_migrations()
+            finally:
+                trans.rollback()
+        else:
+            # For actual migrations, commit the transaction
+            with context.begin_transaction():
+                context.run_migrations()
 
 
 # Dynamically import all modules in the app.models package

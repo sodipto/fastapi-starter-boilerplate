@@ -58,7 +58,7 @@ def _collect_changes(session):
         if not _is_model_auditable(obj):
             continue
         state = inspect(obj)
-        pk = {col.name: getattr(obj, col.key, None) for col in state.mapper.primary_key}
+        pk = {col.name: _truncate(getattr(obj, col.key, None)) for col in state.mapper.primary_key}
         new_values = {}
         for attr in state.mapper.column_attrs:
             name = attr.key
@@ -103,7 +103,7 @@ def _collect_changes(session):
             new_values[name] = _truncate(new)
             cols.append(name)
         if cols:
-            pk = {col.name: getattr(obj, col.key, None) for col in state.mapper.primary_key}
+            pk = {col.name: _truncate(getattr(obj, col.key, None)) for col in state.mapper.primary_key}
             entries.append(
                 {
                     "type": "Update",
@@ -120,7 +120,7 @@ def _collect_changes(session):
         if not _is_model_auditable(obj):
             continue
         state = inspect(obj)
-        pk = {col.name: getattr(obj, col.key, None) for col in state.mapper.primary_key}
+        pk = {col.name: _truncate(getattr(obj, col.key, None)) for col in state.mapper.primary_key}
         old_values = {}
         for attr in state.mapper.column_attrs:
             name = attr.key

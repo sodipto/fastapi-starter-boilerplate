@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_core import PydanticCustomError
 
 from app.core.rbac import AppPermissions
+from app.core.constants.validation import ALPHANUMERIC_REGEX
 
 
 class RoleRequest(BaseModel):
@@ -21,11 +22,14 @@ class RoleRequest(BaseModel):
                 'name_required',
                 'Name is required'
             )
-        if not re.match(r'^[a-zA-Z0-9]+$', v.strip()):
-            raise PydanticCustomError(
-                'name_alphanumeric',
-                'Name must contain only alphanumeric characters'
-            )
+        # Allow spaces in role names but ensure each token is alphanumeric
+        tokens = v.strip().split()
+        for t in tokens:
+            if not ALPHANUMERIC_REGEX.match(t):
+                raise PydanticCustomError(
+                    'name_alphanumeric',
+                    'Name must contain only alphanumeric characters and spaces'
+                )
         return v.strip()
 
     @field_validator('claims')

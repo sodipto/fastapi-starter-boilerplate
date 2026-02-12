@@ -14,8 +14,10 @@ EMAIL_REGEX = re.compile(
 )
 
 
-# Alphanumeric validation regex pattern
-ALPHANUMERIC_REGEX = re.compile(r'^[a-zA-Z0-9]+$')
+# Alphanumeric validation regex pattern (allow spaces)
+# Accept letters, numbers and spaces. Trim/other validation should
+# be performed by callers if needed (e.g., disallow leading/trailing spaces).
+ALPHANUMERIC_REGEX = re.compile(r'^[a-zA-Z0-9 ]+$')
 
 
 # Secure password regex: at least PASSWORD_MIN_LENGTH characters, one uppercase, one lowercase, one digit, one special char

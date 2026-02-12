@@ -202,6 +202,8 @@ docker run -p 8000:8000 --env-file .env.production fastapi-boilerplate
 | Testing | [docs/TESTING.md](docs/TESTING.md) |
 | Package Management | [docs/PACKAGE_MANAGEMENT.md](docs/PACKAGE_MANAGEMENT.md) |
 
+| Audit Settings | [docs/AUDIT_SETTINGS.md](docs/AUDIT_SETTINGS.md) |
+
 ## License
 
 This project is open source and released under the MIT License.  

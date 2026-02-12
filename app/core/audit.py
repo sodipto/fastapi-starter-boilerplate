@@ -21,6 +21,7 @@ from app.core.config import settings
 from app.core.database.session import async_session
 from app.models.audit_log import AuditLog
 from app.core.logger import get_logger
+from app.core.audit_context import get_current_audit_user
 
 _logger = get_logger(__name__)
 
@@ -159,7 +160,7 @@ def after_commit(session):
     if not entries:
         return
 
-    user_id = session.info.get("user_id")
+    user_id = session.info.get("user_id") or get_current_audit_user()
 
     async def _persist_entries(entries, user_id):
         try:
@@ -197,17 +198,3 @@ def after_commit(session):
             loop.run_until_complete(_persist_entries(entries, user_id))
         finally:
             loop.close()
-
-
-def set_session_user(session, user_id: str | None) -> None:
-    """Convenience helper to attach the acting user id to the SQLAlchemy session.
-
-    Call this from repository/service code when a session is available so audit
-    entries can capture `user_id`.
-    """
-    try:
-        if user_id is None:
-            return
-        session.info["user_id"] = str(user_id)
-    except Exception:
-        _logger.debug("Failed to set session user for auditing")

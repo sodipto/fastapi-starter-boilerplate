@@ -7,6 +7,7 @@ from jose import jwt
 
 from app.utils.auth_utils import ALGORITHM
 from app.utils.exception_utils import UnauthorizedException
+from app.core.audit_context import set_current_audit_user
 
 def decode_jwt(token: str) -> dict:
     try:
@@ -26,6 +27,17 @@ class JWTBearer(HTTPBearer):
                 raise UnauthorizedException("Invalid authentication scheme!")
             if not self.verify_jwt(credentials.credentials):
                 raise UnauthorizedException("Invalid or expired token!")
+            # set current audit user in context so DB sessions can pick it up
+            try:
+                payload = decode_jwt(credentials.credentials)
+                user_id = payload.get("user_id") if isinstance(payload, dict) else None
+                if user_id:
+                    print(f"Setting audit user context to {user_id}")
+                    print(f"Path accessed: {request.url.path}")
+                    set_current_audit_user(str(user_id))
+            except Exception:
+                # don't block authentication flow on audit context errors
+                pass
             return credentials.credentials
         else:
             raise UnauthorizedException("Invalid or expired token!")
@@ -33,6 +45,7 @@ class JWTBearer(HTTPBearer):
     def verify_jwt(self, jwt_token: str) -> bool:
         is_token_valid: bool = False
         try:
+            print(f"Decoding JWT token: --------")
             payload = decode_jwt(jwt_token)
         except Exception as e:
             payload = None

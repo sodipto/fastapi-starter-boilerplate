@@ -20,12 +20,14 @@ from dependency_injector import containers, providers
 from app.core.database.session import async_session, get_db
 from app.repositories import UserRepository, EmailLogRepository
 from app.repositories.role_repository import RoleRepository
+from app.repositories.audit_log_repository import AuditLogRepository
 from app.repositories.permission_repository import PermissionRepository
 from app.services import UserService, AuthService, EmailService, SchedulerService
 from app.services.profile_service import ProfileService
 from app.services.token_service import TokenService
 from app.services.role_service import RoleService
 from app.services.permission_service import PermissionService
+from app.services.audit_log_service import AuditLogService
 from app.services.storage_service_factory import StorageServiceFactory
 from app.services.email_template_service import EmailTemplateService
 from app.services.cache.cache_resource import cache_service_resource
@@ -50,6 +52,7 @@ class Container(containers.DeclarativeContainer):
             "app.api.endpoints.v1.role",
             "app.api.endpoints.v1.document",
             "app.api.endpoints.v1.profile",
+            "app.api.endpoints.v1.log",
             "app.core.rbac.dependencies",  # RBAC permission dependencies
             "app.core.rate_limiting.rate_limit",  # Per-route rate limiting
             "app.core.middlewares.rate_limit_middleware",  # Global rate limiting middleware
@@ -115,6 +118,16 @@ class Container(containers.DeclarativeContainer):
     profile_service = providers.Factory(
         ProfileService,
         user_repository=user_repository
+    )
+
+    audit_log_repository = providers.Factory(
+        AuditLogRepository,
+        db_factory=db_session_factory,
+    )
+
+    audit_log_service = providers.Factory(
+        AuditLogService,
+        audit_log_repository=audit_log_repository,
     )
 
     role_service = providers.Factory(

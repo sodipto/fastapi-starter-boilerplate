@@ -119,6 +119,22 @@ class AppPermissions:
         action=AppAction.DELETE,
         resource=AppResource.DOCUMENTS
     )
+
+    # =========================================================================
+    # AUDIT LOGS PERMISSIONS
+    # =========================================================================
+    AUDIT_SEARCH = PermissionDefinition(
+        description="Search audit logs",
+        display_name="Logs",
+        action=AppAction.SEARCH,
+        resource=AppResource.AUDIT_LOGS,
+    )
+    AUDIT_VIEW = PermissionDefinition(
+        description="View audit log",
+        display_name="Logs",
+        action=AppAction.VIEW,
+        resource=AppResource.AUDIT_LOGS
+    )
     
     # =========================================================================
     # PERMISSION REGISTRY
@@ -147,6 +163,9 @@ class AppPermissions:
                 cls.DOCUMENTS_UPLOAD,
                 cls.DOCUMENTS_UPDATE,
                 cls.DOCUMENTS_DELETE,
+                # Audit logs
+                cls.AUDIT_SEARCH,
+                cls.AUDIT_VIEW,
             ]
         return cls._all_permissions
     

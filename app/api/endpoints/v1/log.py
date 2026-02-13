@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends
 from dependency_injector.wiring import inject, Provide
 from app.core.container import Container
 from app.services.interfaces.audit_log_service_interface import IAuditLogService
+from app.core.rbac import AppPermissions, require_permission
 from uuid import UUID
 from datetime import datetime
 
@@ -28,7 +29,9 @@ router = APIRouter(
 @router.get(
         "/audits", 
         summary="Search audit logs",
-        response_model=PagedData[AuditLogListResponse])
+        response_model=PagedData[AuditLogListResponse],
+        dependencies=[Depends(require_permission(AppPermissions.AUDIT_SEARCH))],
+    )
 @inject
 async def search_audits(
     type: str | None = None,
@@ -58,7 +61,9 @@ async def search_audits(
 @router.get(
         "/audits/{id}",
         summary="Get audit log details by id",
-        response_model=AuditLogDetailResponse)
+        response_model=AuditLogDetailResponse,
+        dependencies=[Depends(require_permission(AppPermissions.AUDIT_VIEW))],
+    )
 @inject
 async def get_audit(id: UUID, audit_log_service: IAuditLogService = Depends(Provide[Container.audit_log_service])):
     """Return full audit log details for given id."""

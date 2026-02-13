@@ -16,3 +16,4 @@ class AppResource(str, Enum):
     USERS = "users"
     ROLES = "roles"
     DOCUMENTS = "documents"
+    AUDIT_LOGS = "audit_logs"

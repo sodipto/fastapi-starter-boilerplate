@@ -201,8 +201,7 @@ docker run -p 8000:8000 --env-file .env.production fastapi-boilerplate
 | Logging | [docs/LOGGING.md](docs/LOGGING.md) |
 | Testing | [docs/TESTING.md](docs/TESTING.md) |
 | Package Management | [docs/PACKAGE_MANAGEMENT.md](docs/PACKAGE_MANAGEMENT.md) |
-
-| Audit Settings | [docs/AUDIT_SETTINGS.md](docs/AUDIT_SETTINGS.md) |
+| Audit Logs | [docs/AUDIT_LOGS.md](docs/AUDIT_LOGS.md)
 
 ## License
 

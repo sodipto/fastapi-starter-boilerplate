@@ -91,7 +91,7 @@ app = FastAPI(
     title=f"{settings.OPENAPI_TITLE}",
     description=settings.OPENAPI_DESCRIPTION,
     version=settings.OPENAPI_VERSION,
-    docs_url="/swagger" if settings.OPENAPI_ENABLED else None,
+    docs_url="/docs" if settings.OPENAPI_ENABLED else None,
     redoc_url="/redoc" if settings.OPENAPI_ENABLED else None,
     openapi_url="/openapi.json" if settings.OPENAPI_ENABLED else None,
     lifespan=startup,
@@ -112,7 +112,6 @@ if settings.RATE_LIMIT_ENABLED:
 
 app.add_middleware(
     CORSMiddleware,
-    #allow_origins=["http://localhost:3000"],  # Adjust as needed for production [e.g., specific domains]
     allow_origins=["*"],  # Adjust as needed for production [e.g., specific domains]
     allow_methods=["*"],
     allow_headers=["*"],

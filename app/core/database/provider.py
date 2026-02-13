@@ -29,12 +29,12 @@ class DatabaseConfig:
     # Engine arguments specific to each provider
     ENGINE_ARGS: Dict[DatabaseProvider, Dict[str, Any]] = {
         # Config tuned for a single app process with PostgreSQL max_connections=100
-        # Reserve ~10 connections for other services/maintenance, leave up to 90 for app
+        # Reserve ~10 connections for other services/maintenance, leave up to 30 for app
         DatabaseProvider.POSTGRESQL: {
             "echo": False,
             "pool_pre_ping": True,
-            # keep up to 90 persistent connections (single process)
-            "pool_size": 90,
+            # keep up to 30 persistent connections (single process)
+            "pool_size": 30,
             # allow small overflow for spikes (total possible = pool_size + max_overflow)
             "max_overflow": 10,
             "pool_timeout": 30,

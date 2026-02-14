@@ -133,5 +133,5 @@ MAJOR.MINOR.PATCH
    - `Fixed` - Bug fixes
    - `Security` - Security vulnerability fixes
 
-[Unreleased]: https://github.com/sodipto/python-fastapi-boilerplate/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/sodipto/python-fastapi-boilerplate/releases/tag/v1.0.0
+[Unreleased]: https://github.com/sodipto/fastapi-starter-boilerplate/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/sodipto/fastapi-starter-boilerplate/releases/tag/v1.0.0

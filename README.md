@@ -83,8 +83,8 @@ Building a production-ready API from scratch is time-consuming. You need authent
 **1. Clone the repository**
 
 ```bash
-git clone https://github.com/sodipto/python-fastapi-boilerplate.git
-cd python-fastapi-boilerplate
+git clone https://github.com/sodipto/fastapi-starter-boilerplate.git
+cd fastapi-starter-boilerplate
 ```
 
 **2. Create virtual environment**
@@ -142,7 +142,7 @@ Navigate to http://localhost:8000/docs
 ## 📂 Project Structure
 
 ```
-python-fastapi-boilerplate/
+fastapi-starter-boilerplate/
 ├── app/
 │   ├── api/
 │   │   └── endpoints/

@@ -1,6 +1,6 @@
 ﻿<div align="center">
 
-# 🚀 FastAPI Production Boilerplate
+# 🚀 FastAPI Production-Ready Starter Boilerplate
 
 **A batteries-included FastAPI starter template for building scalable, production-ready APIs**
 
@@ -379,3 +379,4 @@ See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 Made with ❤️ by [Sodipto Saha](https://github.com/sodipto)
 
 </div>
+

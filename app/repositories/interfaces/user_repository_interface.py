@@ -32,3 +32,8 @@ class IUserRepository(IBaseRepository[User]):
     async def assign_roles(self, user_id: uuid.UUID, role_ids: list[uuid.UUID]) -> None:
         """Assign roles to a user, replacing existing roles."""
         pass
+
+    @abstractmethod
+    async def assign_roles_in_session(self, session, user_id: uuid.UUID, role_ids: list[uuid.UUID]) -> None:
+        """Assign roles to a user using an existing session (does not commit)."""
+        pass

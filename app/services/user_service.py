@@ -127,29 +127,29 @@ class UserService(IUserService):
                     f"Roles with ids {missing_role_ids} not found"
                 )
                 
-        # Create user
+        # Create user and assign roles within one session to ensure FK consistency
         user = User(
             email=user_request.email,
-            normalized_email=user_request.email.upper(),
             full_name=user_request.full_name,
             phone_number=user_request.phone_number,
-            password_hash=get_password_hash(user_request.password),
+            password=get_password_hash(user_request.password),
             is_active=user_request.is_active,
             email_confirmed=False
         )
 
-        # Create user without committing yet
-        created_user = await self.user_repository.create(user, auto_commit=False)
+        async with self.user_repository.db_factory() as session:
+            session.add(user)
+            await session.flush()
 
-        # Assign roles if provided
-        if user_request.role_ids:
-            await self.user_repository.assign_roles(created_user.id, user_request.role_ids, auto_commit=False)
+            if user_request.role_ids:
+                await self.user_repository.assign_roles_in_session(session, user.id, user_request.role_ids)
 
-        await self.user_repository.commit()
+            await session.commit()
+
+            created_user = user
 
         # Reload user with roles
         created_user = await self.user_repository.get_by_id_with_roles(created_user.id)
-        
         return self._to_response(created_user)
 
     async def signup(self, signup_request: SignupRequest) -> ResponseMeta:
@@ -169,7 +169,7 @@ class UserService(IUserService):
                 f"System role '{AppRoles.CUSTOMER}' not found. Please seed system roles."
             )
 
-        # Create user model
+        # Create user and assign CUSTOMER role within same session to avoid FK issues
         user = User(
             email=signup_request.email,
             full_name=signup_request.full_name,
@@ -179,18 +179,37 @@ class UserService(IUserService):
             email_confirmed=False,
         )
 
-        created_user = await self.user_repository.create(user, auto_commit=False)
+        async with self.user_repository.db_factory() as session:
+            session.add(user)
+            await session.flush()
 
-        # Assign system role CUSTOMER (required)
-        await self.user_repository.assign_roles(created_user.id, [role.id], auto_commit=False)
-        
-        # If email confirmation is required, generate code and send email
+            await self.user_repository.assign_roles_in_session(session, user.id, [role.id])
+
+            # If email confirmation is required, set verification fields now so they persist in same transaction
+            if settings.REQUIRE_EMAIL_CONFIRMED_ACCOUNT:
+                verification_code = uuid.uuid4()
+                expiry_time = datetime.now(timezone.utc) + timedelta(minutes=settings.EMAIL_VERIFICATION_CODE_EXPIRE_MINUTES)
+                user.email_verification_code = verification_code
+                user.email_verification_code_expiry_time = expiry_time
+
+            await session.commit()
+
+            created_user = user
+
+        # If email confirmation required, send email after commit
         if settings.REQUIRE_EMAIL_CONFIRMED_ACCOUNT:
-            await self._generate_verification_and_send_email(created_user)
-            await self.user_repository.commit()
+            confirm_link = f"{settings.FRONTEND_URL}/confirm-email?code={created_user.email_verification_code}&email={created_user.email}"
+            body = self.email_template_service.render(
+                "confirm_email.html",
+                {"full_name": created_user.full_name, "confirm_link": confirm_link, "expiry_minutes": settings.EMAIL_VERIFICATION_CODE_EXPIRE_MINUTES},
+            )
+            await self.email_service.send_email_async(
+                subject="Confirm your email",
+                body=body,
+                receivers={created_user.email: created_user.full_name},
+            )
             return ResponseMeta(message="Signup successful. Confirmation email sent.")
 
-        await self.user_repository.commit()
         return ResponseMeta(message="Signup successful.")
 
     async def confirm_email(self, email: str, verification_code: str) -> ResponseMeta:
@@ -288,11 +307,13 @@ class UserService(IUserService):
         # Update user fields
         updated_user = await self.user_repository.update(user, auto_commit=False)
 
-        # Update roles if provided
-        if user_request.role_ids is not None:
-            await self.user_repository.assign_roles(user_id, user_request.role_ids, auto_commit=False)
-
-        await self.user_repository.commit()
+        # Update roles within same session for atomicity
+        async with self.user_repository.db_factory() as session:
+            session.add(updated_user)
+            await session.flush()
+            if user_request.role_ids is not None:
+                await self.user_repository.assign_roles_in_session(session, user_id, user_request.role_ids)
+            await session.commit()
 
         # Reload user with updated roles
         updated_user = await self.user_repository.get_by_id_with_roles(user_id)

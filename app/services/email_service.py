@@ -8,9 +8,8 @@ from email.utils import formataddr
 from pathlib import Path
 import re
 import aiosmtplib
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.services.interfaces.email_service_interface import IEmailService
+from app.repositories.interfaces.email_log_repository_interface import IEmailLogRepository
 from app.core.config import settings
 from app.models.email_logger import EmailLogger
 from app.models.enums import EmailStatus
@@ -22,8 +21,9 @@ logger = logging.getLogger(__name__)
 class EmailService(IEmailService):
     """Email service implementation using aiosmtplib."""
 
-    def __init__(self, db: AsyncSession):
-        self.db = db
+    def __init__(self, email_log_repository: IEmailLogRepository):
+        # repository responsible for persisting EmailLogger objects
+        self.email_log_repository = email_log_repository
         self.host = settings.MAIL_HOST
         self.port = settings.MAIL_PORT
         self.username = settings.MAIL_USERNAME
@@ -102,8 +102,8 @@ class EmailService(IEmailService):
                 logger.warning(error_msg)
                 if settings.ENABLE_EMAIL_LOGS and email_log:
                     email_log.error_message = error_msg
-                    self.db.add(email_log)
-                    await self.db.commit()
+                    # create a new persisted log entry
+                    await self.email_log_repository.create(email_log)
                 return
 
             # Create message
@@ -152,9 +152,10 @@ class EmailService(IEmailService):
 
         finally:
             # Save email log to database if logging is enabled
+            print('Saving email log to database...')
             if settings.ENABLE_EMAIL_LOGS and email_log:
-                self.db.add(email_log)
-                await self.db.commit()
+                await self.email_log_repository.create(email_log)
+
 
     async def _add_attachment(self, message: MIMEMultipart, file_path: str) -> None:
         """Add a file attachment to the email message."""

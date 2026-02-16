@@ -74,3 +74,18 @@ class UserRepository(BaseRepository[User], IUserRepository):
                 await session.commit()
             else:
                 await session.flush()
+
+    async def assign_roles_in_session(self, session, user_id: uuid.UUID, role_ids: list[uuid.UUID]) -> None:
+        """Assign roles using an existing session (does not commit). Useful when creating/updating user within same transaction."""
+        await session.execute(
+            delete(UserRole).where(UserRole.user_id == str(user_id))
+        )
+
+        for role_id in role_ids:
+            user_role = UserRole(
+                user_id=user_id,
+                role_id=role_id
+            )
+            session.add(user_role)
+
+        # Do not commit here; caller manages commit/flush

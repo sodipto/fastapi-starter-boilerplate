@@ -103,7 +103,7 @@ class Container(containers.DeclarativeContainer):
 
     email_service = providers.Factory(
         EmailService,
-        db=db_session_factory
+        email_log_repository=email_log_repository
     )
 
     # User service - uses repositories, not other services directly

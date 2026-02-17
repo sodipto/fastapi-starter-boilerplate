@@ -106,13 +106,21 @@ class Container(containers.DeclarativeContainer):
         email_log_repository=email_log_repository
     )
 
+    # RBAC: Permission service with caching for authorization
+    permission_service = providers.Factory(
+        PermissionService,
+        permission_repository=permission_repository,
+        cache_service=cache_service
+    )
+
     # User service - uses repositories, not other services directly
     user_service = providers.Factory(
         UserService,
         user_repository=user_repository,
         role_repository=role_repository,
         email_service=email_service,
-        email_template_service=email_template_service
+        email_template_service=email_template_service,
+        permission_service=permission_service
     )
 
     profile_service = providers.Factory(
@@ -135,12 +143,6 @@ class Container(containers.DeclarativeContainer):
         role_repository=role_repository
     )
 
-    # RBAC: Permission service with caching for authorization
-    permission_service = providers.Factory(
-        PermissionService,
-        permission_repository=permission_repository,
-        cache_service=cache_service
-    )
 
     # Auth service - depends on repositories and utility services
     auth_service = providers.Factory(

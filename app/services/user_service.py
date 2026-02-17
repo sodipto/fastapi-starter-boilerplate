@@ -19,14 +19,23 @@ from app.schema.response.pagination import PagedData, create_paged_response
 from app.services.interfaces import IUserService
 from app.utils.exception_utils import NotFoundException, ConflictException, BadRequestException
 from app.utils.auth_utils import get_password_hash
+from app.services.interfaces.permission_service_interface import IPermissionService
 
 
 class UserService(IUserService):
-    def __init__(self, user_repository: IUserRepository, role_repository: IRoleRepository, email_service: IEmailService, email_template_service: IEmailTemplateService):
+    def __init__(
+        self,
+        user_repository: IUserRepository,
+        role_repository: IRoleRepository,
+        email_service: IEmailService,
+        email_template_service: IEmailTemplateService,
+        permission_service: IPermissionService
+    ):
         self.user_repository = user_repository
         self.role_repository = role_repository
         self.email_service = email_service
         self.email_template_service = email_template_service
+        self.permission_service = permission_service
 
     def _to_response(self, user: User) -> UserResponse:
         """Convert User model to UserResponse."""
@@ -317,7 +326,14 @@ class UserService(IUserService):
 
         # Reload user with updated roles
         updated_user = await self.user_repository.get_by_id_with_roles(user_id)
-        
+
+        # Invalidate permission cache for this user so permission checks reflect updates
+        try:
+            await self.permission_service.invalidate_user_permissions_cache(user_id)
+        except Exception:
+            # Don't fail the update if cache invalidation fails; log elsewhere if needed
+            pass
+
         return self._to_response(updated_user)
 
     async def delete(self, user_id: uuid.UUID) -> None:

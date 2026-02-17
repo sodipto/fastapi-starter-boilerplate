@@ -12,6 +12,7 @@ from app.schema.response.user import UserResponse
 from app.schema.request.identity.profile import UpdateProfileRequest, ChangePasswordRequest
 from app.services.interfaces.profile_service_interface import IProfileService
 from app.utils.exception_utils import BadRequestException
+from app.services.interfaces.permission_service_interface import IPermissionService
 
 
 router = APIRouter(
@@ -103,3 +104,23 @@ async def change_password(
         current_password=request.current_password,
         new_password=request.new_password
     )
+
+
+
+@router.get(
+    "/permissions",
+    summary="Get current user permissions",
+    response_model=list[str],
+    dependencies=[Depends(RateLimit(requests=60, window=60, key_prefix="profile_permissions"))]
+)
+@inject
+async def get_permissions(
+    user_id: UUID = Depends(get_current_user_id),
+    permission_service: IPermissionService = Depends(Provide[Container.permission_service])
+):
+    """
+    Return a list of permission strings for the currently logged-in user.
+    """
+    permissions = await permission_service.get_user_permissions(user_id)
+    # return deterministic list order
+    return sorted(list(permissions))

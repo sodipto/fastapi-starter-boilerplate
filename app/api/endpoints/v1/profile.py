@@ -10,6 +10,7 @@ from app.core.jwt_security import JWTBearer
 from app.schema.response.meta import ResponseMeta
 from app.schema.response.user import UserResponse
 from app.schema.request.identity.profile import UpdateProfileRequest, ChangePasswordRequest
+from app.schema.request.identity.profile import ChangeEmailRequest
 from app.services.interfaces.profile_service_interface import IProfileService
 from app.utils.exception_utils import BadRequestException
 from app.services.interfaces.permission_service_interface import IPermissionService
@@ -104,6 +105,26 @@ async def change_password(
         current_password=request.current_password,
         new_password=request.new_password
     )
+
+
+
+@router.patch(
+    "/email",
+    summary="Change current user email",
+    response_model=ResponseMeta,
+    dependencies=[Depends(RateLimit(requests=3, window=60, key_prefix="profile_change_email"))]
+)
+@inject
+async def change_email(
+    request: ChangeEmailRequest,
+    user_id: UUID = Depends(get_current_user_id),
+    profile_service: IProfileService = Depends(Provide[Container.profile_service])
+):
+    """
+    Change the email address of the currently logged-in user.
+    If `REQUIRE_EMAIL_CONFIRMED_ACCOUNT` is enabled, a confirmation email will be sent.
+    """
+    return await profile_service.change_email(user_id=user_id, email=request.email)
 
 
 

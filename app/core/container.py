@@ -125,7 +125,9 @@ class Container(containers.DeclarativeContainer):
 
     profile_service = providers.Factory(
         ProfileService,
-        user_repository=user_repository
+        user_repository=user_repository,
+        email_service=email_service,
+        email_template_service=email_template_service
     )
 
     audit_log_repository = providers.Factory(

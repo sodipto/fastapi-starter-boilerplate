@@ -65,3 +65,20 @@ class ChangePasswordRequest(BaseModel):
                 "confirm_password": "NewPass1@"
             }
         }
+
+
+class ChangeEmailRequest(BaseModel):
+    """Schema for changing user email."""
+    email: Annotated[str, Field(description="New email address")]
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        if not EMAIL_REGEX.match(v):
+            raise PydanticCustomError("invalid_email_format", "Invalid email format")
+        return v
+
+    class Config:
+        json_schema_extra = {
+            "example": {"email": "new.email@example.com"}
+        }

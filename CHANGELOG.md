@@ -5,17 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-02-20
 
 ### Added
-- (Add new features here before release)
-
-### Changed
-- (Add changes here before release)
-
-### Fixed
-- (Add bug fixes here before release)
-
+- **Profile: change own email**
+  - Endpoint `PUT /profile/email` allowing authenticated users to change their own email.
+  - Validates email uniqueness and format; returns `409 Conflict` if email exists.
+  - When `REQUIRE_EMAIL_CONFIRMED_ACCOUNT=True`, the system generates a verification code, marks the account unconfirmed/inactive, and sends a confirmation email with a verification link.
+  - Keeps changes atomic so verification code and DB update persist together.
 ---
 
 ## [1.0.0] - 2026-02-14
@@ -132,6 +129,3 @@ MAJOR.MINOR.PATCH
    - `Removed` - Removed features
    - `Fixed` - Bug fixes
    - `Security` - Security vulnerability fixes
-
-[Unreleased]: https://github.com/sodipto/fastapi-starter-boilerplate/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/sodipto/fastapi-starter-boilerplate/releases/tag/v1.0.0

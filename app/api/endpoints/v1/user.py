@@ -19,7 +19,9 @@ from app.core.jwt_security import JWTBearer
 from app.core.constants.pagination import PAGE, PAGE_SIZE
 from app.core.rbac import AppPermissions, require_permission
 from app.schema.request.identity.user import UserRequest, UserUpdateRequest
+from app.schema.request.identity.profile import ChangeEmailRequest
 from app.schema.request.identity.user_status import UserStatusRequest
+from app.schema.response.meta import ResponseMeta
 from app.schema.response.user import UserResponse, UserSearchResponse, UserRoleResponse
 from app.schema.response.pagination import PagedData
 from app.services.interfaces.user_service_interface import IUserService
@@ -140,6 +142,25 @@ async def update(
         - permission.users.update
     """
     return await user_service.update(id, user_request)
+
+
+@router.patch(
+    "/{id}/email",
+    summary="Change user email",
+    response_model=ResponseMeta,
+    dependencies=[
+        Depends(require_permission(AppPermissions.USERS_UPDATE)),
+        Depends(RateLimit(requests=5, window=60, key_prefix="users_change_email")),
+    ]
+)
+@inject
+async def change_user_email(
+    id: uuid.UUID,
+    request: ChangeEmailRequest,
+    user_service: IUserService = Depends(Provide[Container.user_service])
+):
+    """Change another user's email (requires `permission.users.update`)."""
+    return await user_service.change_email(id, request.email)
 
 # =============================================================================
 # GET ROLES - Requires USERS_VIEW permission

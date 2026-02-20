@@ -54,6 +54,11 @@ class IUserService(ABC):
         pass
 
     @abstractmethod
+    async def change_email(self, user_id: uuid.UUID, email: str) -> ResponseMeta:
+        """Change another user's email (admin action)."""
+        pass
+
+    @abstractmethod
     async def delete(self, user_id: uuid.UUID) -> None:
         """Delete a user."""
         pass

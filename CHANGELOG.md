@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Validates email uniqueness and format; returns `409 Conflict` if email exists.
   - When `REQUIRE_EMAIL_CONFIRMED_ACCOUNT=True`, the system generates a verification code, marks the account unconfirmed/inactive, and sends a confirmation email with a verification link.
   - Keeps changes atomic so verification code and DB update persist together.
+ - **Admin: change user email**
+   - Endpoint `PUT /users/{id}/email` allowing permitted users to change another user's email.
+   - Requires `permission.users.update`; validates email uniqueness and format; returns `409 Conflict` if email exists.
+   - When `REQUIRE_EMAIL_CONFIRMED_ACCOUNT=True`, the system generates a verification code for the target user and sends a confirmation email; changes persist atomically.
 ---
 
 ## [1.0.0] - 2026-02-14

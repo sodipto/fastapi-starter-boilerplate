@@ -336,6 +336,40 @@ class UserService(IUserService):
 
         return self._to_response(updated_user)
 
+    async def change_email(self, user_id: uuid.UUID, email: str) -> ResponseMeta:
+        """Allow permitted users to change another user's email.
+
+        Behavior mirrors profile change:
+        - validates uniqueness
+        - if `REQUIRE_EMAIL_CONFIRMED_ACCOUNT` is enabled, sets verification code and sends confirmation email
+        - otherwise updates email and marks confirmed
+        """
+        user = await self.user_repository.get_by_id(user_id)
+        if not user:
+            raise NotFoundException(
+                "user_id",
+                f"User with id {user_id} not found"
+            )
+
+        if user.email.lower() == email.lower():
+            raise BadRequestException(key="email", message="New email is the same as current email")
+
+        existing = await self.user_repository.get_by_email(email)
+        if existing and str(existing.id) != str(user.id):
+            raise ConflictException(key="email", message=f"User with email '{email}' already exists")
+
+        if settings.REQUIRE_EMAIL_CONFIRMED_ACCOUNT:
+            # set new email on user and generate verification (helper will persist without committing)
+            user.email = email.lower()
+            await self._generate_verification_and_send_email(user)
+            await self.user_repository.commit()
+            return ResponseMeta(message="Email change requested. Confirmation email sent.")
+
+        user.email = email.lower()
+        user.email_confirmed = True
+        await self.user_repository.update(user)
+        return ResponseMeta(message="Email updated successfully.")
+
     async def delete(self, user_id: uuid.UUID) -> None:
         """Delete a user."""
         user = await self.user_repository.get_by_id(user_id)

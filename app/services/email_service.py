@@ -152,7 +152,6 @@ class EmailService(IEmailService):
 
         finally:
             # Save email log to database if logging is enabled
-            print('Saving email log to database...')
             if settings.ENABLE_EMAIL_LOGS and email_log:
                 await self.email_log_repository.create(email_log)
 

@@ -138,7 +138,7 @@ class UserService(IUserService):
                 
         # Create user and assign roles within one session to ensure FK consistency
         user = User(
-            email=user_request.email,
+            email=user_request.email.lower(),
             full_name=user_request.full_name,
             phone_number=user_request.phone_number,
             password=get_password_hash(user_request.password),
@@ -168,7 +168,7 @@ class UserService(IUserService):
         if existing_user:
             raise ConflictException(
                 "email",
-                f"User with email '{signup_request.email}' already exists"
+                f"User with email '{signup_request.email.lower()}' already exists"
             )
         
         role = await self.role_repository.get_by_normalized_name(AppRoles.CUSTOMER)
@@ -180,7 +180,7 @@ class UserService(IUserService):
 
         # Create user and assign CUSTOMER role within same session to avoid FK issues
         user = User(
-            email=signup_request.email,
+            email=signup_request.email.lower(),
             full_name=signup_request.full_name,
             phone_number=signup_request.phone_number,
             password=get_password_hash(signup_request.password),

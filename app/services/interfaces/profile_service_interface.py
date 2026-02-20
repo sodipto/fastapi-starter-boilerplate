@@ -3,6 +3,7 @@ import uuid
 
 from app.schema.request.identity.profile import UpdateProfileRequest
 from app.schema.response.user import UserResponse
+from app.schema.response.meta import ResponseMeta
 
 
 class IProfileService(ABC):
@@ -21,4 +22,9 @@ class IProfileService(ABC):
     @abstractmethod
     async def change_password(self, user_id: uuid.UUID, current_password: str, new_password: str) -> dict:
         """Change user's password."""
+        pass
+
+    @abstractmethod
+    async def change_email(self, user_id: uuid.UUID, email: str) -> ResponseMeta:
+        """Change user's email (send verification when required)."""
         pass

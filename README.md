@@ -1,6 +1,6 @@
 ﻿<div align="center">
 
-# 🚀 FastAPI Production-Ready Starter Boilerplate
+# 🚀 Python FastAPI Production-Ready Starter Boilerplate
 
 **A batteries-included FastAPI starter template for building scalable, production-ready APIs**
 

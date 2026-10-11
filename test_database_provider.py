@@ -1,7 +1,3 @@
-"""
-Test database connectivity for different providers.
-This script helps verify that the database configuration is correct.
-"""
 import asyncio
 import sys
 from sqlalchemy.ext.asyncio import create_async_engine
